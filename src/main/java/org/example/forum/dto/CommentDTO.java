@@ -1,4 +1,4 @@
-package org.example.forum.entity.dto;
+package org.example.forum.dto;
 
 
 import lombok.Data;

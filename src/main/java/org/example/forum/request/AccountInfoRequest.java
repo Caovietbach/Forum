@@ -1,4 +1,4 @@
-package org.example.forum.entity.request;
+package org.example.forum.request;
 
 import lombok.Data;
 

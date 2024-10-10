@@ -1,9 +1,10 @@
-package org.example.forum.entity.request;
+package org.example.forum.dto;
+
 
 import lombok.Data;
 
 @Data
-public class PostInteractionRequest {
+public class PostInteractionDTO {
 
     private Long postId;
 
