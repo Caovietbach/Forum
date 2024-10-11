@@ -85,7 +85,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return "Please input password";}
         else if (account == null){
             return "No user have this user name";
-        } else if (account.getPassword() != password ){
+        } else if (!account.getPassword().equals(password) ){
+            System.out.println(account.getPassword());
+            System.out.println(password);
             return "Incorrect password";
         } else {
             return null;
