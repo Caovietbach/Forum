@@ -76,7 +76,34 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return result;
     }
 
+    public String validateLogin(String username, String password) {
+        AccountEntity account = repo.findByusername(username);
+
+        if (username == null) {
+           return "Please input user name";}
+        else if (password == null){
+            return "Please input password";}
+        else if (account == null){
+            return "No user have this user name";
+        } else if (account.getPassword() != password ){
+            return "Incorrect password";
+        } else {
+            return null;
+        }
+    }
+
+    public void register(String username, String password){
+        AccountEntity account = new AccountEntity();
+        account.setUsername(username);
+        account.setPassword(password);
+        account.setRole("user");
+        account.setStatus(1);
+        repo.save(account);
+    }
 
 
-    
+
+
+
+
 }
