@@ -14,7 +14,7 @@ public interface AuthenticationService {
 
     AccountEntity getUserByName(String username);
 
-    String validateLogin(String username, String password);
+    boolean validateLogin(String username, String password);
 
     void register(String username, String password);
 }

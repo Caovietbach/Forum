@@ -23,5 +23,8 @@ public class PostEntity {
     private Date createdAt;
 
     private int status;
+    //status:
+    //1:normal
+    //2:hidden
 
 }

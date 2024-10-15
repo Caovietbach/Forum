@@ -7,14 +7,12 @@ import java.util.Date;
 @Data
 public class AccountDTO {
 
-    private Long id;
     private String username;
     private String role;
     private Date createdAt;
     private int status;
 
-    public AccountDTO(Long id, String username, String role, Date createdAt, int status) {
-        this.id = id;
+    public AccountDTO( String username, String role, Date createdAt, int status) {
         this.username = username;
         this.role = role;
         this.createdAt = createdAt;

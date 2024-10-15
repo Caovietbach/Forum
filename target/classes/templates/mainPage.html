@@ -1,14 +1,32 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>Main Page</title>
 </head>
 <body>
+<div align="center">
     <h1>Forum</h1>
-    <h2 href="/forum">Reload<h2>
+    <br/><br/>
+    <a href="writePost">Posting</a>
+    <br/><br/>
+    <table border="1" cellpadding="10">
+        <thead>
+        <tr>
+            <th>User</th>
+            <th>Post</th>
+            <th>Posted at</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="post : ${listPosts}">
+            <td th:text="${post.username}"></td> <!-- Accessing username from PostDTO -->
+            <td th:text="${post.title}"></td>
+            <td th:text="${post.createdAt}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>

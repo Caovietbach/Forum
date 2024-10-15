@@ -34,22 +34,18 @@ public class AuthenticationController {
     public String login(@RequestParam("username") String username,
                         @RequestParam("password") String password,
                         HttpServletResponse response, Model model) {
-        String error = service.validateLogin(username,password);
-        logger.error(error);
-        if (error!=null){
-            model.addAttribute("error", error);
-            return "login";
-        }
-
+        if(!service.validateLogin(username,password)){
+            return "redirect:/login";
+        };
         final String jwt = service.generateToken(username);
 
 
         Cookie cookie = new Cookie("JWT_TOKEN", jwt);
         cookie.setHttpOnly(true);
-        cookie.setMaxAge(10 * 60 * 60);
+        cookie.setMaxAge(10 * 60 * 60); // 8 hours
         cookie.setPath("/");
         response.addCookie(cookie);
-        logger.info("Successfully logged in. Redirecting to mainPage.");
+        logger.info("Successfully logged in. Redirecting to Main Page.");
         return "redirect:/forum";
     }
 
@@ -69,15 +65,10 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public String register(@RequestParam("username") String username,
-                           @RequestParam("password") String password,
-                           HttpServletResponse response, Model model){
+                           @RequestParam("password") String password){
         service.register(username,password);
-        logger.info(service.getUserByName(username).toString());
         return "login";
     }
 
-    @GetMapping("/forum")
-    public String getMainPage(){
-        return "mainPage";
-    }
+
 }

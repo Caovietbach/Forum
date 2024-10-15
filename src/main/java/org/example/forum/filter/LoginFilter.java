@@ -56,6 +56,7 @@ public class LoginFilter extends OncePerRequestFilter {
         }
 
         if (user != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            logger.info(user.getRole());
             List<GrantedAuthority> authorities = new ArrayList<>();
             if ("user".equals(user.getRole())) {
                 authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
