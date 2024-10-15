@@ -2,6 +2,7 @@ package org.example.forum.service.Impl;
 
 import jakarta.transaction.Transactional;
 import org.example.forum.entity.AccountEntity;
+import org.example.forum.exception.ValidateException;
 import org.example.forum.repository.AccountRepository;
 import org.example.forum.service.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import io.jsonwebtoken.security.Keys;
 
 
 import java.security.Key;
+import java.sql.Struct;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -76,21 +78,19 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return result;
     }
 
-    public String validateLogin(String username, String password) {
+    public boolean validateLogin(String username, String password) {
         AccountEntity account = repo.findByusername(username);
 
         if (username == null) {
-           return "Please input user name";}
+           throw new ValidateException("Please input user name");}
         else if (password == null){
-            return "Please input password";}
+            throw new ValidateException("Please input password");}
         else if (account == null){
-            return "No user have this user name";
+            throw new ValidateException("No user have this user name");
         } else if (!account.getPassword().equals(password) ){
-            System.out.println(account.getPassword());
-            System.out.println(password);
-            return "Incorrect password";
+            throw new ValidateException("Incorrect password");
         } else {
-            return null;
+            return true;
         }
     }
 

@@ -8,8 +8,7 @@ import java.util.Date;
 @Data
 public class AccountInfoDTO {
 
-    private Long id;
-    private Long accountId;
+    private String username;
     private Date dateOfBirth;
     private int gender;
     private String nationality;
@@ -17,4 +16,13 @@ public class AccountInfoDTO {
     private String email;
     private String description;
 
+    public AccountInfoDTO(String username, Date dateOfBirth, int gender, String nationality, String phoneNumbers, String email, String description) {
+        this.username = username;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
+        this.nationality = nationality;
+        this.phoneNumbers = phoneNumbers;
+        this.email = email;
+        this.description = description;
+    }
 }

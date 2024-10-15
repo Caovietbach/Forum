@@ -1,4 +1,4 @@
 package org.example.forum.service;
 
-public interface PostInterface {
+public interface CommentService {
 }
