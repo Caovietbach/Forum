@@ -45,7 +45,7 @@ public class PostController {
         }
         AccountEntity currentAccount = authenticationService.extractUser(jwtToken);
         postService.writePost(currentAccount.getId(), tittle);
-        return "mainPage";
+        return "redirect:/forum";
     }
 
     @GetMapping("/editPost/{id}")

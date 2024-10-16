@@ -18,7 +18,7 @@ public class CommentEntity {
     private Long id;
     private Long accountId;
 
-    private long postId;
+    private Long postId;
 
     private String content;
 
