@@ -59,13 +59,13 @@ public class PostServiceImpl implements PostService {
         return postDTOs;
     }
 
-    public void editPost(Long accountId, String tittle){
+    public void editPost(Long id, String title){
+
+        PostEntity post = postRepository.findById(id).get();
 
         Date d = new Date(System.currentTimeMillis());
 
-        PostEntity post = null;
-        post.setAccountId(accountId);
-        post.setTitle(tittle);
+        post.setTitle(title);
         post.setCreatedAt(d);
         post.setStatus(1);
 
