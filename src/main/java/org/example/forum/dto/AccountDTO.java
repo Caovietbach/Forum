@@ -12,10 +12,4 @@ public class AccountDTO {
     private Date createdAt;
     private int status;
 
-    public AccountDTO( String username, String role, Date createdAt, int status) {
-        this.username = username;
-        this.role = role;
-        this.createdAt = createdAt;
-        this.status = status;
-    }
 }

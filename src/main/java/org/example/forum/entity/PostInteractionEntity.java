@@ -16,6 +16,8 @@ public class PostInteractionEntity {
     private Long postId;
 
     private int interactionType;
+    //Like: 1
+    //Dislike: 2
 
     private long interactedAccountId;
 

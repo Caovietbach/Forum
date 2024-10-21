@@ -17,7 +17,7 @@ import java.util.List;
 @Controller
 public class PostController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
+    private static final Logger logger = LoggerFactory.getLogger(PostController.class);
 
     @Autowired
     private PostService postService;
@@ -28,6 +28,11 @@ public class PostController {
     @GetMapping("/forum")
     public String mainPage(Model model) {
         List<PostDTO> listPosts = postService.showPost();
+        for (PostDTO post : listPosts) {
+            post.setLikeCount(postService.getLikeCount(post.getId()));
+            post.setDislikeCount(postService.getDislikeCount(post.getId()));
+        }
+
         model.addAttribute("listPosts", listPosts);
         return "mainPage";
     }
@@ -38,13 +43,15 @@ public class PostController {
     }
 
     @PostMapping("/writePost")
-    public String writePost(@CookieValue(name = "jwtToken", required = false) String jwtToken,@RequestParam("tittle") String tittle){
+    public String writePost(@CookieValue(name = "JWT_TOKEN", required = false) String jwtToken, @RequestParam("title") String title) {
         if (jwtToken == null) {
             logger.warn("No jwtToken found in request");
             return "redirect:/login";
         }
+        logger.info(jwtToken);
         AccountEntity currentAccount = authenticationService.extractUser(jwtToken);
-        postService.writePost(currentAccount.getId(), tittle);
+        logger.info("user name is: {}",currentAccount.getId());
+        postService.writePost(currentAccount.getId(), title);
         return "redirect:/forum";
     }
 
@@ -65,12 +72,32 @@ public class PostController {
         return "redirect:/forum";
     }
 
-
     @PostMapping("/deletePost/{id}")
     public String deletePost(@PathVariable Long id) {
         postService.deletePost(id);
         return "redirect:/forum";
     }
 
+    @PostMapping("/likePost/{id}")
+    public String likePost(@CookieValue(name = "JWT_TOKEN", required = false) String jwtToken, @PathVariable Long postId) {
+        if (jwtToken == null) {
+            logger.warn("No jwtToken found in request");
+            return "redirect:/login";
+        }
+        AccountEntity currentAccount = authenticationService.extractUser(jwtToken);
+        postService.likePost(postId, currentAccount.getId());
+        return "redirect:/forum";
+    }
 
+
+    @PostMapping("/dislikePost/{id}")
+    public String dislikePost(@CookieValue(name = "jwtToken", required = false) String jwtToken, @PathVariable Long postId) {
+        if (jwtToken == null) {
+            logger.warn("No jwtToken found in request");
+            return "redirect:/login";
+        }
+        AccountEntity currentAccount = authenticationService.extractUser(jwtToken);
+        postService.dislikePost(postId, currentAccount.getId());
+        return "redirect:/forum";
+    }
 }

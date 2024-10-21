@@ -1,12 +1,20 @@
 package org.example.forum.service.Impl;
 
 import jakarta.transaction.Transactional;
+import org.example.forum.controller.AuthenticationController;
 import org.example.forum.dto.PostDTO;
+import org.example.forum.dto.PostInteractionDTO;
 import org.example.forum.entity.AccountEntity;
 import org.example.forum.entity.PostEntity;
+import org.example.forum.entity.PostInteractionEntity;
+import org.example.forum.exception.ValidateException;
 import org.example.forum.repository.AccountRepository;
+import org.example.forum.repository.PostInteractionRepository;
 import org.example.forum.repository.PostRepository;
 import org.example.forum.service.PostService;
+import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +26,18 @@ import java.util.List;
 @Transactional
 public class PostServiceImpl implements PostService {
 
+    ModelMapper mapper = new ModelMapper();
+
     @Autowired
     private PostRepository postRepository;
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private PostInteractionRepository postInteractionRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
     public PostEntity getPostById(Long id){
         PostEntity result = postRepository.findById(id).get();
@@ -37,7 +52,7 @@ public class PostServiceImpl implements PostService {
 
         Date d = new Date(System.currentTimeMillis());
 
-        PostEntity post = null;
+        PostEntity post = new PostEntity();
         post.setAccountId(accountId);
         post.setTitle(tittle);
         post.setCreatedAt(d);
@@ -53,7 +68,9 @@ public class PostServiceImpl implements PostService {
         for (PostEntity post : posts) {
             AccountEntity account = accountRepository.findById(post.getAccountId()).orElse(null);
             String username = (account != null) ? account.getUsername() : "Unknown";
-            postDTOs.add(new PostDTO(username, post.getTitle(), post.getCreatedAt(),post.getStatus()));
+            PostDTO p = mapper.map(post,PostDTO.class);
+            p.setUsername(username);
+            postDTOs.add(p);
         }
 
         return postDTOs;
@@ -72,11 +89,49 @@ public class PostServiceImpl implements PostService {
         save(post);
     }
 
+    public int getLikeCount(Long postId) {
+        return postInteractionRepository.countLikes(postId);
+    }
+
+    public int getDislikeCount(Long postId) {
+        return postInteractionRepository.countDislikes(postId);
+    }
+
+    public void likePost(Long postId, Long accountId) {
+        PostInteractionEntity existingInteraction = postInteractionRepository.findByPostIdAndInteractedAccountId(postId, accountId);
+
+        if (existingInteraction == null) {
+            PostInteractionEntity newInteraction = new PostInteractionEntity();
+            newInteraction.setPostId(postId);
+            newInteraction.setInteractedAccountId(accountId);
+            newInteraction.setInteractionType(1);
+            postInteractionRepository.save(newInteraction);
+        } else {
+            logger.error("1");
+        }
+    }
+
+    public void dislikePost(Long postId, Long accountId) {
+        PostInteractionEntity existingInteraction = postInteractionRepository.findByPostIdAndInteractedAccountId(postId, accountId);
+
+        if (existingInteraction == null) {
+            PostInteractionEntity newInteraction = new PostInteractionEntity();
+            newInteraction.setPostId(postId);
+            newInteraction.setInteractedAccountId(accountId);
+            newInteraction.setInteractionType(2);
+            postInteractionRepository.save(newInteraction);
+        } else {
+            logger.error("2");
+        }
+    }
 
 
     public void deletePost(Long id) {
-        postRepository.deleteById(id);
+        PostEntity post = postRepository.findById(id).get();
+        post.setStatus(2);
     }
+
+
 
 
 

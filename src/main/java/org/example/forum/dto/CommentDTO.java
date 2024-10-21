@@ -16,12 +16,4 @@ public class CommentDTO {
     private Date createdAt;
 
     private int status;
-
-    public CommentDTO(String username, Long postId, String content, Date createdAt, int status) {
-        this.username = username;
-        this.postId = postId;
-        this.content = content;
-        this.createdAt = createdAt;
-        this.status = status;
-    }
 }

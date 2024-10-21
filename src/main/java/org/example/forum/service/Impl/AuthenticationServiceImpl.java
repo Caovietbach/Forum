@@ -2,8 +2,10 @@ package org.example.forum.service.Impl;
 
 import jakarta.transaction.Transactional;
 import org.example.forum.entity.AccountEntity;
+import org.example.forum.entity.JwtBlacklist;
 import org.example.forum.exception.ValidateException;
 import org.example.forum.repository.AccountRepository;
+import org.example.forum.repository.JwtBlacklistRepository;
 import org.example.forum.service.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,10 @@ import java.util.Map;
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Autowired
-    private AccountRepository repo;
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private JwtBlacklistRepository jwtBlacklistRepository;
 
     private final String SECRET_KEY = "secretfortheproject123456789566343535353453890234567435554";
 
@@ -36,12 +41,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
 
     public AccountEntity getUserByName(String username) {
-        return repo.findByusername(username);
+        return accountRepository.findByusername(username);
     }
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
-        AccountEntity u = repo.findByusername(username);
+        AccountEntity u = accountRepository.findByusername(username);
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(username)
@@ -74,12 +79,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
-        AccountEntity result = repo.findByusername(user);
+        AccountEntity result = accountRepository.findByusername(user);
         return result;
     }
 
     public boolean validateLogin(String username, String password) {
-        AccountEntity account = repo.findByusername(username);
+        AccountEntity account = accountRepository.findByusername(username);
 
         if (username == null) {
            throw new ValidateException("Please input user name");}
@@ -100,7 +105,32 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         account.setPassword(password);
         account.setRole("user");
         account.setStatus(1);
-        repo.save(account);
+        accountRepository.save(account);
+    }
+
+
+    public void save(JwtBlacklist jwtBlacklist) {
+        jwtBlacklistRepository.save(jwtBlacklist);
+    }
+
+    public JwtBlacklist findJwt(String jwtToken) {
+        return jwtBlacklistRepository.findByJwt(jwtToken);
+    }
+
+    public boolean isTokenBlacklisted(String jwtToken) {
+        String token = jwtToken.substring(7);
+        if (jwtBlacklistRepository.findByJwt(token) != null){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void addJwtToBlackList(String jwtToken){
+        String jwt = jwtToken.substring(7);
+        JwtBlacklist a = new JwtBlacklist();
+        a.setJwt(jwt);
+        save(a);
     }
 
 

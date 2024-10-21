@@ -15,7 +15,18 @@ public interface PostService {
 
     PostEntity getPostById(Long id);
 
+    int getLikeCount(Long postId);
+
+    int getDislikeCount(Long postId);
+
+    void likePost(Long postId, Long accountId);
+
+
+
+    void dislikePost(Long postId, Long accountId);
+
     void deletePost(Long Id);
+
 
 
 

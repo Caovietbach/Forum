@@ -3,6 +3,7 @@ package org.example.forum.controller;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.forum.entity.JwtBlacklist;
 import org.example.forum.filter.LoginFilter;
 import org.example.forum.service.AuthenticationService;
 import org.slf4j.Logger;
@@ -50,11 +51,12 @@ public class AuthenticationController {
     }
 
     @GetMapping("/logout")
-    public String logout(HttpServletResponse response) {
-        Cookie cookie = new Cookie("JWT_TOKEN", null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        response.addCookie(cookie);
+    public String logout(@CookieValue(name = "JWT_TOKEN", required = false) String jwtToken) {
+        logger.info("Token for logout: ", jwtToken);
+        JwtBlacklist jwtBlacklist = service.findJwt(jwtToken);
+        if (jwtBlacklist == null) {
+            service.addJwtToBlackList(jwtToken);
+        }
         return "redirect:/login";
     }
 

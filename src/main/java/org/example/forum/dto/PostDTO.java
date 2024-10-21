@@ -6,6 +6,8 @@ import java.util.Date;
 
 @Data
 public class PostDTO {
+    private Long id;
+
     private String username;
 
     private String title;
@@ -14,10 +16,9 @@ public class PostDTO {
 
     private int status;
 
-    public PostDTO(String username, String title, Date createdAt, int status) {
-        this.username = username;
-        this.title = title;
-        this.createdAt = createdAt;
-        this.status = status;
-    }
+    private int likeCount;
+
+    private int dislikeCount;
+
+
 }
