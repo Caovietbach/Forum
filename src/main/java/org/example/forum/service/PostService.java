@@ -33,11 +33,14 @@ public interface PostService {
 
     void likePost(Long postId, Long accountId);
 
-    Page<PostDTO> getPage(List<PostDTO> posts, Pageable pageable);
-    PostListResponse getContent(Page<PostDTO> posts);
     void dislikePost(Long postId, Long accountId);
 
     void deletePost(Long Id);
+
+    Page<PostDTO> getPage(List<PostDTO> posts, Pageable pageable);
+    PostListResponse getContent(Page<PostDTO> posts);
+
+    void checkUser(long id);
 
 
 

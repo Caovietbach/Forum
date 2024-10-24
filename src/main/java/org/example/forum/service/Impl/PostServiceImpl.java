@@ -13,6 +13,7 @@ import org.example.forum.repository.PostInteractionRepository;
 import org.example.forum.repository.PostRepository;
 import org.example.forum.request.PostRequest;
 import org.example.forum.response.pagination.PostListResponse;
+import org.example.forum.service.AuthenticationService;
 import org.example.forum.service.PostService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -43,6 +44,9 @@ public class PostServiceImpl implements PostService {
 
     @Autowired
     private PostInteractionRepository postInteractionRepository;
+
+    @Autowired
+    private AuthenticationService authenticationService;
 
     private static final Logger logger = LoggerFactory.getLogger(PostServiceImpl.class);
 
@@ -195,6 +199,14 @@ public class PostServiceImpl implements PostService {
     public PostListResponse getContent(Page<PostDTO> posts){
         PostListResponse data = new PostListResponse(posts.getTotalElements(),posts.getTotalPages(), posts.getSize(), posts.getContent());
         return data;
+    }
+
+    public void checkUser(long id){
+        AccountEntity currentAccount = authenticationService.extractUser();
+        PostEntity post = getPostById(id);
+        if(!currentAccount.getId().equals(post.getAccountId())){
+            throw new ValidateException("This post is not written by you");
+        }
     }
 
 

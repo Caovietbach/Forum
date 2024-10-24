@@ -14,4 +14,8 @@ public interface CommentRepository extends CrudRepository<CommentEntity, Long>, 
 
     List<CommentEntity> findByPostId(Long postId);
 
+    CommentEntity findByid(Long id);
+
+
+
 }

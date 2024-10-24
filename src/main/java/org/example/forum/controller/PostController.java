@@ -95,22 +95,14 @@ public class PostController {
 
     @PostMapping("/editPost/{id}")
     public ApiResponse<String> editPost(@PathVariable Long id, @RequestParam("title") String title) {
-        AccountEntity currentAccount = authenticationService.extractUser();
-        PostEntity post = postService.getPostById(id);
-        if(!currentAccount.getId().equals(post.getAccountId())){
-            throw new ValidateException("This post is not written by you");
-        }
+        postService.checkUser(id);
         postService.editPost(id, title);
         return new ApiResponse<>(true, "Post edited successfully", null);
     }
 
     @DeleteMapping("/deletePost/{id}")
     public ApiResponse<String> deletePost(@PathVariable Long id) {
-        AccountEntity currentAccount = authenticationService.extractUser();
-        PostEntity post = postService.getPostById(id);
-        if(!currentAccount.getId().equals(post.getAccountId())){
-            throw new ValidateException("This post is not written by you");
-        }
+        postService.checkUser(id);
         postService.deletePost(id);
         return new ApiResponse<>(true, "Post deleted successfully", null);
     }
