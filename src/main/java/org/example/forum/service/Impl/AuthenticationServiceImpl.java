@@ -6,8 +6,13 @@ import org.example.forum.entity.JwtBlacklist;
 import org.example.forum.exception.ValidateException;
 import org.example.forum.repository.AccountRepository;
 import org.example.forum.repository.JwtBlacklistRepository;
+import org.example.forum.response.login.UserLoginResponse;
 import org.example.forum.service.AuthenticationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -32,6 +37,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private JwtBlacklistRepository jwtBlacklistRepository;
 
     private final String SECRET_KEY = "secretfortheproject123456789566343535353453890234567435554";
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
 
     public Key getSecretKey() {
@@ -70,6 +77,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         int exp = (int) ((expirationTimeMillis - currentTimeMillis) / 1000);
 
         return exp;
+    }
+
+    public AccountEntity extractUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        logger.info("the authen: {}", authentication);
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof AccountEntity) {
+                return (AccountEntity) principal;
+            }
+        }
+        return null;
     }
 
     public AccountEntity extractUser(String token) {
@@ -131,6 +150,19 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         JwtBlacklist a = new JwtBlacklist();
         a.setJwt(jwt);
         save(a);
+    }
+
+    public UserLoginResponse getLoginInfo(String token){
+        UserLoginResponse res = new UserLoginResponse();
+        res.setAccessToken(token);
+        res.setTokenType("Bearer");
+        res.setExpiresIn(extractExpiration(token));
+        if (token == null) {
+            throw new ValidateException("Invalid token");
+        } else {
+            return res;
+        }
+
     }
 
 

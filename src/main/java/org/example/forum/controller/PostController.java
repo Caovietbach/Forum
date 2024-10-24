@@ -3,21 +3,36 @@ package org.example.forum.controller;
 import org.example.forum.dto.PostDTO;
 import org.example.forum.entity.AccountEntity;
 import org.example.forum.entity.PostEntity;
+import org.example.forum.exception.ValidateException;
+import org.example.forum.request.PostRequest;
+import org.example.forum.response.api.ApiResponse;
+import org.example.forum.response.pagination.PostListResponse;
 import org.example.forum.service.AuthenticationService;
 import org.example.forum.service.PostService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+
+import java.util.ArrayList;
 import java.util.List;
 
-@Controller
+@RestController
+@RequestMapping("/api/posts")
 public class PostController {
 
     private static final Logger logger = LoggerFactory.getLogger(PostController.class);
+
+    private static final int SORT_BY_FIRST_ALPHABET_IN_TITLE = 1;
+    private static final int SORT_BY_FAVOURITISM = 2;
+    private static final int SORT_BY_TOTAL_INTERACTIONS = 3;
 
     @Autowired
     private PostService postService;
@@ -25,79 +40,98 @@ public class PostController {
     @Autowired
     private AuthenticationService authenticationService;
 
+
     @GetMapping("/forum")
-    public String mainPage(Model model) {
+    public ApiResponse<PostListResponse> getAllPosts(@RequestParam(value = "page", defaultValue = "0") int page,
+                                                     @RequestParam(value = "size", defaultValue = "10") int size) {
         List<PostDTO> listPosts = postService.showPost();
         for (PostDTO post : listPosts) {
             post.setLikeCount(postService.getLikeCount(post.getId()));
             post.setDislikeCount(postService.getDislikeCount(post.getId()));
         }
-
-        model.addAttribute("listPosts", listPosts);
-        return "mainPage";
+        Pageable pageable = PageRequest.of(page,size);
+        Page<PostDTO> posts = postService.getPage(listPosts, pageable);
+        return new ApiResponse<>(true, "Posts retrieved successfully", postService.getContent(posts));
     }
 
-    @GetMapping("/writePost")
-    public String writePostPage() {
-        return "writePost";
+    @PostMapping("/search")
+    public ApiResponse<PostListResponse> search(@RequestParam(value = "sort", required = false) Integer sort,
+                                                @RequestParam(value = "page", defaultValue = "0") int page,
+                                                @RequestParam(value = "size", defaultValue = "10") int size,
+                                                @ModelAttribute PostRequest p){
+        Pageable pageable = PageRequest.of(page, size);
+        List<PostDTO> listPosts = new ArrayList<>();
+
+        if(p.getUsername() != null || p.getTitle() != null){
+            listPosts = postService.search(p);
+        }
+        listPosts = postService.sortByCreatedDate(listPosts);
+        if (sort != null){
+            if (sort == SORT_BY_FIRST_ALPHABET_IN_TITLE) {
+                listPosts = postService.sortByFirstAlphabetInTitle(listPosts);
+            }
+            if (sort == SORT_BY_FAVOURITISM) {
+                listPosts = postService.sortByFavouritism(listPosts);
+            }
+            if (sort == SORT_BY_TOTAL_INTERACTIONS) {
+                listPosts = postService.sortByTotalInteraction(listPosts);
+            }
+        }
+
+        Page<PostDTO> posts = postService.getPage(listPosts, pageable);
+        return new ApiResponse<>(true, "Posts retrieved successfully", postService.getContent(posts));
     }
 
     @PostMapping("/writePost")
-    public String writePost(@CookieValue(name = "JWT_TOKEN", required = false) String jwtToken, @RequestParam("title") String title) {
-        if (jwtToken == null) {
-            logger.warn("No jwtToken found in request");
-            return "redirect:/login";
+    public ApiResponse<String> writePost(@RequestParam("title") String title) {
+        AccountEntity currentAccount = authenticationService.extractUser();
+        if (currentAccount == null){
+            throw new ValidateException("Please login to write a post");
         }
-        logger.info(jwtToken);
-        AccountEntity currentAccount = authenticationService.extractUser(jwtToken);
-        logger.info("user name is: {}",currentAccount.getId());
+        logger.info("User name is: {}", currentAccount.getUsername());
         postService.writePost(currentAccount.getId(), title);
-        return "redirect:/forum";
-    }
-
-    @GetMapping("/editPost/{id}")
-    public String editPostPage(@PathVariable Long id, Model model) {
-        PostEntity post = postService.getPostById(id);
-        if (post != null) {
-            model.addAttribute("post", post);
-            return "editPost";
-        } else {
-            return "redirect:/forum";
-        }
+        return new ApiResponse<>(true, "Post created successfully", null);
     }
 
     @PostMapping("/editPost/{id}")
-    public String editPost(@PathVariable Long id, @RequestParam("title") String title) {
+    public ApiResponse<String> editPost(@PathVariable Long id, @RequestParam("title") String title) {
+        AccountEntity currentAccount = authenticationService.extractUser();
+        PostEntity post = postService.getPostById(id);
+        if(!currentAccount.getId().equals(post.getAccountId())){
+            throw new ValidateException("This post is not written by you");
+        }
         postService.editPost(id, title);
-        return "redirect:/forum";
+        return new ApiResponse<>(true, "Post edited successfully", null);
     }
 
-    @PostMapping("/deletePost/{id}")
-    public String deletePost(@PathVariable Long id) {
+    @DeleteMapping("/deletePost/{id}")
+    public ApiResponse<String> deletePost(@PathVariable Long id) {
+        AccountEntity currentAccount = authenticationService.extractUser();
+        PostEntity post = postService.getPostById(id);
+        if(!currentAccount.getId().equals(post.getAccountId())){
+            throw new ValidateException("This post is not written by you");
+        }
         postService.deletePost(id);
-        return "redirect:/forum";
+        return new ApiResponse<>(true, "Post deleted successfully", null);
     }
 
     @PostMapping("/likePost/{id}")
-    public String likePost(@CookieValue(name = "JWT_TOKEN", required = false) String jwtToken, @PathVariable Long postId) {
-        if (jwtToken == null) {
-            logger.warn("No jwtToken found in request");
-            return "redirect:/login";
+    public ApiResponse<String> likePost(@PathVariable Long id) {
+        AccountEntity currentAccount = authenticationService.extractUser();
+        if (currentAccount == null){
+            throw new ValidateException("Please login to dislike this post");
         }
-        AccountEntity currentAccount = authenticationService.extractUser(jwtToken);
-        postService.likePost(postId, currentAccount.getId());
-        return "redirect:/forum";
+        postService.likePost(id, currentAccount.getId());
+        return new ApiResponse<>(true, "Post liked successfully", null);
     }
 
-
     @PostMapping("/dislikePost/{id}")
-    public String dislikePost(@CookieValue(name = "jwtToken", required = false) String jwtToken, @PathVariable Long postId) {
-        if (jwtToken == null) {
-            logger.warn("No jwtToken found in request");
-            return "redirect:/login";
+    public ApiResponse<String> dislikePost(@PathVariable Long id) {
+        AccountEntity currentAccount = authenticationService.extractUser();
+        if (currentAccount == null){
+            throw new ValidateException("Please login to dislike this post");
         }
-        AccountEntity currentAccount = authenticationService.extractUser(jwtToken);
-        postService.dislikePost(postId, currentAccount.getId());
-        return "redirect:/forum";
+        postService.dislikePost(id, currentAccount.getId());
+        return new ApiResponse<>(true, "Post disliked successfully", null);
     }
 }

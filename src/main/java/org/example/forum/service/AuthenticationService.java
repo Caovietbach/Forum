@@ -2,6 +2,7 @@ package org.example.forum.service;
 
 import org.example.forum.entity.AccountEntity;
 import org.example.forum.entity.JwtBlacklist;
+import org.example.forum.response.login.UserLoginResponse;
 import org.springframework.stereotype.Service;
 
 
@@ -10,6 +11,8 @@ public interface AuthenticationService {
     String generateToken(String username);
 
     int extractExpiration(String token);
+
+    AccountEntity extractUser();
 
     AccountEntity extractUser(String token);
 
@@ -25,7 +28,7 @@ public interface AuthenticationService {
 
     void addJwtToBlackList(String jwt);
 
-
+    UserLoginResponse getLoginInfo(String token);
 
 
 

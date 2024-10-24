@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.forum.dto.AccountDTO;
 import org.example.forum.entity.AccountEntity;
+import org.example.forum.exception.ValidateException;
 import org.example.forum.service.AuthenticationService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -41,41 +42,47 @@ public class LoginFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
-        String jwt = null;
-        AccountEntity user = null;
+            throws IOException, ServletException {
+        String jwtToken = request.getHeader("Authorization");
+        logger.info("token: {}", jwtToken);
 
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("JWT_TOKEN")) {
-                    jwt = cookie.getValue();
-                    break;
+        if (jwtToken != null && authService.isTokenBlacklisted(jwtToken)) {
+            setErrorResponse(response, request.getServletPath(), "Unauthorized", "Token is blacklisted");
+
+        }
+        if (jwtToken != null && jwtToken.startsWith("Bearer ")) {
+            String token = jwtToken.substring(7);
+            logger.info("JWT: {}", token);
+            try {
+                AccountEntity user = authService.extractUser(token);
+                logger.info("user: {}", user.getUsername());
+                logger.info("The user role is: {}", user.getRole());
+
+                if (user != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    List<GrantedAuthority> authorities = new ArrayList<>();
+                    if ("user".equals(user.getRole())) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                    } else if ("admin".equals(user.getRole())) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                    } else {
+                        throw new ValidateException("This user does not have a role.");
+                    }
+                    logger.info("The user has {} authority", authorities);
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    user,
+                                    null,
+                                    authorities
+                            );
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
+            } catch (Exception e) {
+                setErrorResponse(response, request.getServletPath(), "Unauthorized", e.getMessage());
             }
         }
 
-        if (jwt != null) {
-            user = authService.extractUser(jwt);
-        }
 
-        if (user != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            logger.info(user.getRole());
-            List<GrantedAuthority> authorities = new ArrayList<>();
-            if ("user".equals(user.getRole())) {
-                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-            }
-            if ("admin".equals(user.getRole())) {
-                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-            }
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            user,
-                            null,
-                            authorities
-                    );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
         chain.doFilter(request, response);
     }
 
