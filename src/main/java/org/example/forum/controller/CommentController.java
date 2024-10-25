@@ -44,35 +44,30 @@ public class CommentController {
         Page<CommentDTO> comments = commentService.getPage(listComments, pageable);
         return new ApiResponse<>(true, "Comments retrieved successfully", commentService.getContent(comments));
     }
-    @PostMapping("/{id}/writeComment")
-    public ApiResponse<String> writePost(@PathVariable Long id, @RequestParam("content") String content) {
+    @PostMapping("/{postId}/writeComment")
+    public ApiResponse<String> writePost(@PathVariable Long postId, @RequestParam("content") String content) {
         AccountEntity currentAccount = authenticationService.extractUser();
         if (currentAccount == null){
             throw new ValidateException("Please login to write a comment");
         }
+        if (currentAccount.getStatus() == 2){
+            throw new ValidateException("Your account has been muted, you can't write a post");
+        }
         logger.info("User name is: {}", currentAccount.getUsername());
-        commentService.writeComment(currentAccount.getId(),id, content);
+        commentService.writeComment(currentAccount.getId(),postId, content);
         return new ApiResponse<>(true, "Post created successfully", null);
     }
 
-    @PostMapping("/editPost/{id}")
+    @PutMapping("/{postId}/editComment/{id}")
     public ApiResponse<String> editPost(@PathVariable Long id, @RequestParam("content") String content) {
-        AccountEntity currentAccount = authenticationService.extractUser();
-        CommentEntity comment = commentService.findCommentById(id);
-        if(!currentAccount.getId().equals(comment.getAccountId())){
-            throw new ValidateException("This comment is not written by you");
-        }
+        commentService.checkUser(id);
         commentService.editComment(id, content);
         return new ApiResponse<>(true, "Post edited successfully", null);
     }
 
-    @DeleteMapping("/deletePost/{id}")
+    @DeleteMapping("/{postId}/deleteComment/{id}")
     public ApiResponse<String> deletePost(@PathVariable Long id) {
-        AccountEntity currentAccount = authenticationService.extractUser();
-        CommentEntity comment = commentService.findCommentById(id);
-        if(!currentAccount.getId().equals(comment.getAccountId())){
-            throw new ValidateException("This comment is not written by you");
-        }
+        commentService.checkUser(id);
         commentService.deleteComment(id);
         return new ApiResponse<>(true, "Post deleted successfully", null);
     }

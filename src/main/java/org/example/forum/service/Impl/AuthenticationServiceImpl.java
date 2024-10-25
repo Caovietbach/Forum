@@ -2,8 +2,10 @@ package org.example.forum.service.Impl;
 
 import jakarta.transaction.Transactional;
 import org.example.forum.entity.AccountEntity;
+import org.example.forum.entity.AccountInfoEntity;
 import org.example.forum.entity.JwtBlacklist;
 import org.example.forum.exception.ValidateException;
+import org.example.forum.repository.AccountInfoRepository;
 import org.example.forum.repository.AccountRepository;
 import org.example.forum.repository.JwtBlacklistRepository;
 import org.example.forum.response.login.UserLoginResponse;
@@ -35,6 +37,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Autowired
     private JwtBlacklistRepository jwtBlacklistRepository;
+
+    @Autowired
+    private AccountInfoRepository accountInfoRepository;
+
+
 
     private final String SECRET_KEY = "secretfortheproject123456789566343535353453890234567435554";
 
@@ -120,11 +127,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     public void register(String username, String password){
         AccountEntity account = new AccountEntity();
+        Date d = new Date(System.currentTimeMillis());
         account.setUsername(username);
         account.setPassword(password);
-        account.setRole("user");
+        account.setCreatedAt(d);
+        account.setRole("admin");
         account.setStatus(1);
         accountRepository.save(account);
+        AccountInfoEntity aie = new AccountInfoEntity();
+        aie.setAccountId(account.getId());
+        accountInfoRepository.save(aie);
     }
 
 

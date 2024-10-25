@@ -61,6 +61,11 @@ public class PostServiceImpl implements PostService {
 
     public void writePost(Long accountId, String tittle){
 
+        AccountEntity currentAccount = accountRepository.findByid(accountId);
+        if(currentAccount.getStatus() == 2){
+            throw new ValidateException("Your account has been muted due to your violation of the guideline. Please connect to the admin to discuss an uplift");
+        }
+
         Date d = new Date(System.currentTimeMillis());
 
         PostEntity post = new PostEntity();
@@ -74,7 +79,7 @@ public class PostServiceImpl implements PostService {
 
     public List<PostDTO> showPost(){
         List<PostDTO> postDTOs = new ArrayList<>();
-        List<PostEntity> posts = postRepository.findAll();
+        List<PostEntity> posts = postRepository.getActivePost();
 
         for (PostEntity post : posts) {
             AccountEntity account = accountRepository.findById(post.getAccountId()).orElse(null);

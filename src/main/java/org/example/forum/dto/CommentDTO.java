@@ -9,8 +9,6 @@ import java.util.Date;
 public class CommentDTO {
     private String username;
 
-    private Long postId;
-
     private String content;
 
     private Date createdAt;

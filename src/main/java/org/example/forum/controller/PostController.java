@@ -88,12 +88,15 @@ public class PostController {
         if (currentAccount == null){
             throw new ValidateException("Please login to write a post");
         }
+        if (currentAccount.getStatus() == 2){
+            throw new ValidateException("Your account has been muted, you can't write a post");
+        }
         logger.info("User name is: {}", currentAccount.getUsername());
         postService.writePost(currentAccount.getId(), title);
         return new ApiResponse<>(true, "Post created successfully", null);
     }
 
-    @PostMapping("/editPost/{id}")
+    @PutMapping("/editPost/{id}")
     public ApiResponse<String> editPost(@PathVariable Long id, @RequestParam("title") String title) {
         postService.checkUser(id);
         postService.editPost(id, title);

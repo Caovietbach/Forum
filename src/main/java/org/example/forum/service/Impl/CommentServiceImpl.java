@@ -3,13 +3,13 @@ package org.example.forum.service.Impl;
 
 import jakarta.transaction.Transactional;
 import org.example.forum.dto.CommentDTO;
-import org.example.forum.dto.PostDTO;
 import org.example.forum.entity.AccountEntity;
 import org.example.forum.entity.CommentEntity;
+import org.example.forum.exception.ValidateException;
 import org.example.forum.repository.AccountRepository;
 import org.example.forum.repository.CommentRepository;
 import org.example.forum.response.pagination.CommentListResponse;
-import org.example.forum.response.pagination.PostListResponse;
+import org.example.forum.service.AuthenticationService;
 import org.example.forum.service.CommentService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +18,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import javax.xml.stream.events.Comment;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -34,6 +33,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private AuthenticationService authenticationService;
 
     ModelMapper mapper = new ModelMapper();
 
@@ -52,6 +54,10 @@ public class CommentServiceImpl implements CommentService {
 
     public void writeComment(Long accountId, Long postId, String content){
 
+        AccountEntity currentAccount = accountRepository.findByid(accountId);
+        if(currentAccount.getStatus() == 2){
+            throw new ValidateException("Your account has been muted due to your violation of the guideline. Please connect to the admin to discuss an uplift");
+        }
         Date d = new Date(System.currentTimeMillis());
 
         CommentEntity comment = null;
@@ -66,16 +72,15 @@ public class CommentServiceImpl implements CommentService {
 
     public List<CommentDTO> showCommentsOfAPost(Long postId){
         List<CommentDTO> commentDTOs = new ArrayList<>();
-        List<CommentEntity> comments = commentRepository.findByPostId(postId);
+        List<CommentEntity> comments = commentRepository.getActiveComment(postId);
 
         for (CommentEntity comment : comments) {
             AccountEntity account = accountRepository.findById(comment.getAccountId()).orElse(null);
             String username = (account != null) ? account.getUsername() : "Unknown";
             CommentDTO c = mapper.map(comment,CommentDTO.class);
             c.setUsername(username);
-            if(c.getStatus() != 2){
-                commentDTOs.add(c);
-            }
+            commentDTOs.add(c);
+
         }
         Collections.reverse(commentDTOs);
 
@@ -112,6 +117,14 @@ public class CommentServiceImpl implements CommentService {
     public CommentListResponse getContent(Page<CommentDTO> comments){
         CommentListResponse data = new CommentListResponse(comments.getTotalElements(),comments.getTotalPages(), comments.getSize(), comments.getContent());
         return data;
+    }
+
+    public void checkUser(Long id){
+        AccountEntity currentAccount = authenticationService.extractUser();
+        CommentEntity comment = findCommentById(id);
+        if(!currentAccount.getId().equals(comment.getAccountId())){
+            throw new ValidateException("This is the comment from another account, you can't do this function");
+        }
     }
 
 

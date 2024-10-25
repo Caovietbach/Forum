@@ -5,6 +5,7 @@ import org.example.forum.entity.AccountEntity;
 import org.example.forum.entity.JwtBlacklist;
 import org.example.forum.response.api.ApiResponse;
 import org.example.forum.response.login.UserLoginResponse;
+import org.example.forum.service.AccountService;
 import org.example.forum.service.AuthenticationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,9 @@ public class AuthenticationController {
 
     @Autowired
     private AuthenticationService service;
+
+    @Autowired
+    private AccountService accountService;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
@@ -44,10 +48,22 @@ public class AuthenticationController {
 
 
     @PostMapping("/register")
-    public String register(@RequestParam("username") String username,
+    public ApiResponse<UserLoginResponse> register(@RequestParam("username") String username,
                            @RequestParam("password") String password){
         service.register(username,password);
-        return "login";
+        return new ApiResponse<>(true, "Successfully creating new account", null);
+    }
+
+    @PutMapping("/{id}/muteAccount")
+    public ApiResponse<String> muteAccount(@PathVariable Long id){
+        accountService.suspendAccount(id);
+        return new ApiResponse<>(true, "Muting account successfully", null);
+    }
+
+    @PutMapping("/{id}/unmuteAccount")
+    public ApiResponse<String> unmuteAccount(@PathVariable Long id){
+        accountService.upliftAccount(id);
+        return new ApiResponse<>(true, "Un-muting account successfully", null);
     }
 
 
