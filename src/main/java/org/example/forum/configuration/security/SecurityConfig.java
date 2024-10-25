@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register","/api/auth/login","api/auth/logout").permitAll()
-                        .requestMatchers("api/auth/{id}/muteAccount", "api/auth/{id}/unmuteAccount").hasRole("ADMIN")
+                        .requestMatchers("api/auth/{id}/mute", "api/auth/{id}/unmute").hasRole("ADMIN")
                         .requestMatchers("/api/posts/**").hasAnyRole("USER","ADMIN")
                         .requestMatchers("/api/comments/**").hasAnyRole("USER","ADMIN")
                         .requestMatchers("/api/account/**").hasAnyRole("USER","ADMIN")

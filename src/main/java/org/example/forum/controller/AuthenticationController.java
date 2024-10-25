@@ -54,13 +54,13 @@ public class AuthenticationController {
         return new ApiResponse<>(true, "Successfully creating new account", null);
     }
 
-    @PutMapping("/{id}/muteAccount")
+    @PutMapping("/{id}/mute")
     public ApiResponse<String> muteAccount(@PathVariable Long id){
         accountService.suspendAccount(id);
         return new ApiResponse<>(true, "Muting account successfully", null);
     }
 
-    @PutMapping("/{id}/unmuteAccount")
+    @PutMapping("/{id}/unmute")
     public ApiResponse<String> unmuteAccount(@PathVariable Long id){
         accountService.upliftAccount(id);
         return new ApiResponse<>(true, "Un-muting account successfully", null);

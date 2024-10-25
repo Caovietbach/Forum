@@ -41,7 +41,7 @@ public class PostController {
     private AuthenticationService authenticationService;
 
 
-    @GetMapping("/forum")
+    @GetMapping("/")
     public ApiResponse<PostListResponse> getAllPosts(@RequestParam(value = "page", defaultValue = "0") int page,
                                                      @RequestParam(value = "size", defaultValue = "10") int size) {
         List<PostDTO> listPosts = postService.showPost();
@@ -82,7 +82,7 @@ public class PostController {
         return new ApiResponse<>(true, "Posts retrieved successfully", postService.getContent(posts));
     }
 
-    @PostMapping("/writePost")
+    @PostMapping("/write")
     public ApiResponse<String> writePost(@RequestParam("title") String title) {
         AccountEntity currentAccount = authenticationService.extractUser();
         if (currentAccount == null){
@@ -96,21 +96,21 @@ public class PostController {
         return new ApiResponse<>(true, "Post created successfully", null);
     }
 
-    @PutMapping("/editPost/{id}")
+    @PutMapping("/{id}")
     public ApiResponse<String> editPost(@PathVariable Long id, @RequestParam("title") String title) {
         postService.checkUser(id);
         postService.editPost(id, title);
         return new ApiResponse<>(true, "Post edited successfully", null);
     }
 
-    @DeleteMapping("/deletePost/{id}")
+    @DeleteMapping("/{id}")
     public ApiResponse<String> deletePost(@PathVariable Long id) {
         postService.checkUser(id);
         postService.deletePost(id);
         return new ApiResponse<>(true, "Post deleted successfully", null);
     }
 
-    @PostMapping("/likePost/{id}")
+    @PostMapping("/like/{id}")
     public ApiResponse<String> likePost(@PathVariable Long id) {
         AccountEntity currentAccount = authenticationService.extractUser();
         if (currentAccount == null){
@@ -120,7 +120,7 @@ public class PostController {
         return new ApiResponse<>(true, "Post liked successfully", null);
     }
 
-    @PostMapping("/dislikePost/{id}")
+    @PostMapping("/dislike/{id}")
     public ApiResponse<String> dislikePost(@PathVariable Long id) {
         AccountEntity currentAccount = authenticationService.extractUser();
         if (currentAccount == null){

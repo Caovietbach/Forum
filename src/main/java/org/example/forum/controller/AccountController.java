@@ -29,14 +29,14 @@ public class AccountController {
         return new ApiResponse<>(true, "Account profile retrieved successfully", a);
     }
 
-    @PutMapping("/{id}/editAccountProfile")
+    @PutMapping("/{id}")
     public ApiResponse<String> editProfile(@PathVariable Long id, @RequestBody AccountInfoRequest a){
         accountService.checkUser(id);
         accountService.editAccountInfo(a);
         return new ApiResponse<>(true, "Modify account profile successfully", null);
     }
 
-    @DeleteMapping("/{id}/deleteAccount")
+    @DeleteMapping("/{id}")
     public ApiResponse<String> deleteAccount(@PathVariable Long id){
         accountService.checkUser(id);
         accountService.deleteAccount(id);

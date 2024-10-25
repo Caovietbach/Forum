@@ -36,15 +36,15 @@ public class CommentController {
 
     private static final Logger logger = LoggerFactory.getLogger(CommentController.class);
 
-    @GetMapping("/{id}")
-    public ApiResponse<CommentListResponse> getAllComments(@PathVariable Long id ,@RequestParam(value = "page", defaultValue = "0") int page,
+    @GetMapping("/{postId}")
+    public ApiResponse<CommentListResponse> getAllComments(@PathVariable Long postId ,@RequestParam(value = "page", defaultValue = "0") int page,
                                                            @RequestParam(value = "size", defaultValue = "10") int size) {
-        List<CommentDTO> listComments = commentService.showCommentsOfAPost(id);
+        List<CommentDTO> listComments = commentService.showCommentsOfAPost(postId);
         Pageable pageable = PageRequest.of(page,size);
         Page<CommentDTO> comments = commentService.getPage(listComments, pageable);
         return new ApiResponse<>(true, "Comments retrieved successfully", commentService.getContent(comments));
     }
-    @PostMapping("/{postId}/writeComment")
+    @PostMapping("/{postId}/")
     public ApiResponse<String> writePost(@PathVariable Long postId, @RequestParam("content") String content) {
         AccountEntity currentAccount = authenticationService.extractUser();
         if (currentAccount == null){
@@ -58,14 +58,14 @@ public class CommentController {
         return new ApiResponse<>(true, "Post created successfully", null);
     }
 
-    @PutMapping("/{postId}/editComment/{id}")
+    @PutMapping("/{postId}/{id}")
     public ApiResponse<String> editPost(@PathVariable Long id, @RequestParam("content") String content) {
         commentService.checkUser(id);
         commentService.editComment(id, content);
         return new ApiResponse<>(true, "Post edited successfully", null);
     }
 
-    @DeleteMapping("/{postId}/deleteComment/{id}")
+    @DeleteMapping("/{postId}/{id}")
     public ApiResponse<String> deletePost(@PathVariable Long id) {
         commentService.checkUser(id);
         commentService.deleteComment(id);
