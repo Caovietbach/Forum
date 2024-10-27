@@ -7,6 +7,8 @@ import org.example.forum.entity.AccountEntity;
 import org.example.forum.entity.CommentEntity;
 import org.example.forum.entity.PostEntity;
 import org.example.forum.exception.ValidateException;
+import org.example.forum.request.CommentRequest;
+import org.example.forum.request.PostRequest;
 import org.example.forum.response.api.ApiResponse;
 import org.example.forum.response.pagination.CommentListResponse;
 import org.example.forum.response.pagination.PostListResponse;
@@ -45,7 +47,7 @@ public class CommentController {
         return new ApiResponse<>(true, "Comments retrieved successfully", commentService.getContent(comments));
     }
     @PostMapping("/{postId}/")
-    public ApiResponse<String> writePost(@PathVariable Long postId, @RequestParam("content") String content) {
+    public ApiResponse<String> writePost(@PathVariable Long postId, @RequestBody CommentRequest comment) {
         AccountEntity currentAccount = authenticationService.extractUser();
         if (currentAccount == null){
             throw new ValidateException("Please login to write a comment");
@@ -54,14 +56,14 @@ public class CommentController {
             throw new ValidateException("Your account has been muted, you can't write a post");
         }
         logger.info("User name is: {}", currentAccount.getUsername());
-        commentService.writeComment(currentAccount.getId(),postId, content);
+        commentService.writeComment(currentAccount.getId(),postId, comment.getContent());
         return new ApiResponse<>(true, "Post created successfully", null);
     }
 
     @PutMapping("/{postId}/{id}")
-    public ApiResponse<String> editPost(@PathVariable Long id, @RequestParam("content") String content) {
+    public ApiResponse<String> editPost(@PathVariable Long id,  @RequestBody CommentRequest comment) {
         commentService.checkUser(id);
-        commentService.editComment(id, content);
+        commentService.editComment(id, comment.getContent());
         return new ApiResponse<>(true, "Post edited successfully", null);
     }
 

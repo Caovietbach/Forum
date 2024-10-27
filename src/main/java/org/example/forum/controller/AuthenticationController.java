@@ -48,9 +48,8 @@ public class AuthenticationController {
 
 
     @PostMapping("/register")
-    public ApiResponse<UserLoginResponse> register(@RequestParam("username") String username,
-                           @RequestParam("password") String password){
-        service.register(username,password);
+    public ApiResponse<UserLoginResponse> register(@RequestBody AccountEntity account){
+        service.register(account.getUsername(),account.getPassword());
         return new ApiResponse<>(true, "Successfully creating new account", null);
     }
 

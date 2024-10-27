@@ -58,7 +58,7 @@ public class PostController {
     public ApiResponse<PostListResponse> search(@RequestParam(value = "sort", required = false) Integer sort,
                                                 @RequestParam(value = "page", defaultValue = "0") int page,
                                                 @RequestParam(value = "size", defaultValue = "10") int size,
-                                                @ModelAttribute PostRequest p){
+                                                @RequestBody PostRequest p){
         Pageable pageable = PageRequest.of(page, size);
         List<PostDTO> listPosts = new ArrayList<>();
 
@@ -83,7 +83,7 @@ public class PostController {
     }
 
     @PostMapping("/write")
-    public ApiResponse<String> writePost(@RequestParam("title") String title) {
+    public ApiResponse<String> writePost(@RequestBody PostRequest post) {
         AccountEntity currentAccount = authenticationService.extractUser();
         if (currentAccount == null){
             throw new ValidateException("Please login to write a post");
@@ -92,14 +92,14 @@ public class PostController {
             throw new ValidateException("Your account has been muted, you can't write a post");
         }
         logger.info("User name is: {}", currentAccount.getUsername());
-        postService.writePost(currentAccount.getId(), title);
+        postService.writePost(currentAccount.getId(), post.getTitle());
         return new ApiResponse<>(true, "Post created successfully", null);
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<String> editPost(@PathVariable Long id, @RequestParam("title") String title) {
+    public ApiResponse<String> editPost(@PathVariable Long id, @RequestBody PostRequest post) {
         postService.checkUser(id);
-        postService.editPost(id, title);
+        postService.editPost(id, post.getTitle());
         return new ApiResponse<>(true, "Post edited successfully", null);
     }
 
