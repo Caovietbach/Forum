@@ -14,14 +14,15 @@ import java.util.List;
 @Repository
 public interface PostRepository extends CrudRepository<PostEntity, Long>,JpaRepository<PostEntity,Long> {
     @Query("SELECT p FROM PostEntity p WHERE " +
-            "(p.accountId = :accountId) AND " +
-            "(p.title LIKE %:title%)")
+            "(:accountId IS NULL OR p.accountId = :accountId) AND " +
+            "(:title IS NULL OR p.title LIKE %:title%) AND" +
+            "(p.status != 2)")
     List<PostEntity> searchBy(
             @Param("accountId") Long accountId,
             @Param("title") String title);
 
 
     @Query("SELECT p FROM PostEntity p WHERE " +
-            "(:status != 2)")
+            "(p.status != 2)")
     List<PostEntity> getActivePost();
 }

@@ -3,6 +3,7 @@ package org.example.forum.service.Impl;
 import jakarta.transaction.Transactional;
 import org.example.forum.entity.AccountEntity;
 import org.example.forum.entity.AccountInfoEntity;
+import org.example.forum.entity.CommentEntity;
 import org.example.forum.entity.JwtBlacklist;
 import org.example.forum.exception.ValidateException;
 import org.example.forum.repository.AccountInfoRepository;
@@ -10,9 +11,13 @@ import org.example.forum.repository.AccountRepository;
 import org.example.forum.repository.JwtBlacklistRepository;
 import org.example.forum.response.login.UserLoginResponse;
 import org.example.forum.service.AuthenticationService;
+import org.example.forum.service.CommentService;
+import org.example.forum.service.PostService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -40,6 +45,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Autowired
     private AccountInfoRepository accountInfoRepository;
+
+    @Lazy
+    @Autowired
+    private PostService postService;
+
+    @Lazy
+    @Autowired
+    private CommentService commentService;
 
 
 
@@ -94,6 +107,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             if (principal instanceof AccountEntity) {
                 return (AccountEntity) principal;
             }
+        } else {
+            throw new ValidateException("Please login to use this function");
         }
         return null;
     }
@@ -171,15 +186,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         res.setExpiresIn(extractExpiration(token));
         if (token == null) {
             throw new ValidateException("Invalid token");
-        } else {
-            return res;
         }
-
+        return res;
     }
 
-
-
-
+    public void checkUser(Long postId, Long commentId, Long accountId){
+        Long id = null;
+        if (postId != null){
+            id = postService.findPostById(postId).getAccountId();
+        } else if (commentId != null){
+            id= commentService.findCommentById(commentId).getAccountId();
+        } else if (accountId != null){
+            id = accountId;
+        } else {
+            throw new ValidateException("Something is wrong in the checking user process.");
+        }
+        AccountEntity currentAccount = extractUser();
+        if(!currentAccount.getId().equals(id)){
+            throw new ValidateException("This is the comment from another account, you can't do this function");
+        }
+    }
 
 
 }

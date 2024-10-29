@@ -30,10 +30,6 @@ public class PostController {
 
     private static final Logger logger = LoggerFactory.getLogger(PostController.class);
 
-    private static final int SORT_BY_FIRST_ALPHABET_IN_TITLE = 1;
-    private static final int SORT_BY_FAVOURITISM = 2;
-    private static final int SORT_BY_TOTAL_INTERACTIONS = 3;
-
     @Autowired
     private PostService postService;
 
@@ -41,43 +37,14 @@ public class PostController {
     private AuthenticationService authenticationService;
 
 
-    @GetMapping("/")
-    public ApiResponse<PostListResponse> getAllPosts(@RequestParam(value = "page", defaultValue = "0") int page,
-                                                     @RequestParam(value = "size", defaultValue = "10") int size) {
-        List<PostDTO> listPosts = postService.showPost();
-        for (PostDTO post : listPosts) {
-            post.setLikeCount(postService.getLikeCount(post.getId()));
-            post.setDislikeCount(postService.getDislikeCount(post.getId()));
-        }
-        Pageable pageable = PageRequest.of(page,size);
-        Page<PostDTO> posts = postService.getPage(listPosts, pageable);
-        return new ApiResponse<>(true, "Posts retrieved successfully", postService.getContent(posts));
-    }
 
-    @PostMapping("/search")
-    public ApiResponse<PostListResponse> search(@RequestParam(value = "sort", required = false) Integer sort,
+    @GetMapping("/")
+    public ApiResponse<PostListResponse> showPost(@RequestParam(value = "sort", required = false) Integer sort,
                                                 @RequestParam(value = "page", defaultValue = "0") int page,
                                                 @RequestParam(value = "size", defaultValue = "10") int size,
-                                                @RequestBody PostRequest p){
-        Pageable pageable = PageRequest.of(page, size);
-        List<PostDTO> listPosts = new ArrayList<>();
-
-        if(p.getUsername() != null || p.getTitle() != null){
-            listPosts = postService.search(p);
-        }
-        listPosts = postService.sortByCreatedDate(listPosts);
-        if (sort != null){
-            if (sort == SORT_BY_FIRST_ALPHABET_IN_TITLE) {
-                listPosts = postService.sortByFirstAlphabetInTitle(listPosts);
-            }
-            if (sort == SORT_BY_FAVOURITISM) {
-                listPosts = postService.sortByFavouritism(listPosts);
-            }
-            if (sort == SORT_BY_TOTAL_INTERACTIONS) {
-                listPosts = postService.sortByTotalInteraction(listPosts);
-            }
-        }
-
+                                                @RequestBody(required = false) PostRequest p){
+        List<PostDTO> listPosts = postService.showPost(p, sort);
+        Pageable pageable = PageRequest.of(page,size);
         Page<PostDTO> posts = postService.getPage(listPosts, pageable);
         return new ApiResponse<>(true, "Posts retrieved successfully", postService.getContent(posts));
     }
@@ -85,48 +52,28 @@ public class PostController {
     @PostMapping("/write")
     public ApiResponse<String> writePost(@RequestBody PostRequest post) {
         AccountEntity currentAccount = authenticationService.extractUser();
-        if (currentAccount == null){
-            throw new ValidateException("Please login to write a post");
-        }
-        if (currentAccount.getStatus() == 2){
-            throw new ValidateException("Your account has been muted, you can't write a post");
-        }
-        logger.info("User name is: {}", currentAccount.getUsername());
         postService.writePost(currentAccount.getId(), post.getTitle());
         return new ApiResponse<>(true, "Post created successfully", null);
     }
 
     @PutMapping("/{id}")
     public ApiResponse<String> editPost(@PathVariable Long id, @RequestBody PostRequest post) {
-        postService.checkUser(id);
+        authenticationService.checkUser(id, null, null);
         postService.editPost(id, post.getTitle());
         return new ApiResponse<>(true, "Post edited successfully", null);
     }
 
     @DeleteMapping("/{id}")
     public ApiResponse<String> deletePost(@PathVariable Long id) {
-        postService.checkUser(id);
+        authenticationService.checkUser(id, null, null);
         postService.deletePost(id);
         return new ApiResponse<>(true, "Post deleted successfully", null);
     }
 
-    @PostMapping("/like/{id}")
-    public ApiResponse<String> likePost(@PathVariable Long id) {
+    @PostMapping("{id}/interact")
+    public ApiResponse<String> interactPost(@PathVariable Long id, @RequestParam int type){
         AccountEntity currentAccount = authenticationService.extractUser();
-        if (currentAccount == null){
-            throw new ValidateException("Please login to dislike this post");
-        }
-        postService.likePost(id, currentAccount.getId());
-        return new ApiResponse<>(true, "Post liked successfully", null);
-    }
-
-    @PostMapping("/dislike/{id}")
-    public ApiResponse<String> dislikePost(@PathVariable Long id) {
-        AccountEntity currentAccount = authenticationService.extractUser();
-        if (currentAccount == null){
-            throw new ValidateException("Please login to dislike this post");
-        }
-        postService.dislikePost(id, currentAccount.getId());
-        return new ApiResponse<>(true, "Post disliked successfully", null);
+        postService.interact(currentAccount,id,type);
+        return new ApiResponse<>(true, "Post interacted successfully", null);
     }
 }

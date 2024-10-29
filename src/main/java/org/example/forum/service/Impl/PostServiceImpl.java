@@ -5,6 +5,7 @@ import org.example.forum.controller.AuthenticationController;
 import org.example.forum.dto.PostDTO;
 import org.example.forum.dto.PostInteractionDTO;
 import org.example.forum.entity.AccountEntity;
+import org.example.forum.entity.CommentEntity;
 import org.example.forum.entity.PostEntity;
 import org.example.forum.entity.PostInteractionEntity;
 import org.example.forum.exception.ValidateException;
@@ -30,6 +31,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.example.forum.constants.AppConstants.*;
+
 @Service
 @Transactional
 public class PostServiceImpl implements PostService {
@@ -48,9 +51,10 @@ public class PostServiceImpl implements PostService {
     @Autowired
     private AuthenticationService authenticationService;
 
+
     private static final Logger logger = LoggerFactory.getLogger(PostServiceImpl.class);
 
-    public PostEntity getPostById(Long id){
+    public PostEntity findPostById(Long id){
         PostEntity result = postRepository.findById(id).get();
         return result;
     }
@@ -59,28 +63,31 @@ public class PostServiceImpl implements PostService {
         postRepository.save(post);
     }
 
-    public void writePost(Long accountId, String tittle){
 
-        AccountEntity currentAccount = accountRepository.findByid(accountId);
-        if(currentAccount.getStatus() == 2){
-            throw new ValidateException("Your account has been muted due to your violation of the guideline. Please connect to the admin to discuss an uplift");
-        }
-
-        Date d = new Date(System.currentTimeMillis());
-
-        PostEntity post = new PostEntity();
-        post.setAccountId(accountId);
-        post.setTitle(tittle);
-        post.setCreatedAt(d);
-        post.setStatus(1);
-
-        save(post);
-    }
-
-    public List<PostDTO> showPost(){
+    public List<PostDTO> showPost(PostRequest postRequest,Integer sort){
+        List<PostDTO> listPosts = new ArrayList<>();
         List<PostDTO> postDTOs = new ArrayList<>();
         List<PostEntity> posts = postRepository.getActivePost();
-
+        if (postRequest.getUsername() != null || postRequest.getTitle() != null){
+            Long accountId = null;
+            AccountEntity account = accountRepository.findByusername(postRequest.getUsername());
+            if (account != null){
+                accountId = account.getId();
+            }
+            posts = postRepository.searchBy(accountId,postRequest.getTitle());
+        }
+        listPosts = sortByCreatedDate(listPosts);
+        if (sort != null){
+            if (sort == SORT_BY_FIRST_ALPHABET_IN_TITLE) {
+                listPosts = sortByFirstAlphabetInTitle(listPosts);
+            }
+            if (sort == SORT_BY_FAVOURITISM) {
+                listPosts = sortByFavouritism(listPosts);
+            }
+            if (sort == SORT_BY_TOTAL_INTERACTIONS) {
+                listPosts = sortByTotalInteraction(listPosts);
+            }
+        }
         for (PostEntity post : posts) {
             AccountEntity account = accountRepository.findById(post.getAccountId()).orElse(null);
             String username = (account != null) ? account.getUsername() : "Unknown";
@@ -88,23 +95,10 @@ public class PostServiceImpl implements PostService {
             p.setUsername(username);
             postDTOs.add(p);
         }
-        Collections.reverse(postDTOs);
-        return postDTOs;
-    }
-
-    public List<PostDTO> search(PostRequest postRequest){
-        List<PostDTO> postDTOs = new ArrayList<>();
-        Long accountId = accountRepository.findByusername(postRequest.getUsername()).getId();
-        List<PostEntity> posts = postRepository.searchBy(accountId,postRequest.getTitle());
-
-        for (PostEntity post : posts) {
-            AccountEntity account = accountRepository.findById(post.getAccountId()).orElse(null);
-            String username = (account != null) ? account.getUsername() : "Unknown";
-            PostDTO p = mapper.map(post,PostDTO.class);
-            p.setUsername(username);
-            postDTOs.add(p);
+        for (PostDTO post : postDTOs) {
+            post.setLikeCount(getLikeCount(post.getId()));
+            post.setDislikeCount(getDislikeCount(post.getId()));
         }
-        postDTOs = sortByCreatedDate(postDTOs);
         return postDTOs;
     }
 
@@ -130,6 +124,22 @@ public class PostServiceImpl implements PostService {
         return allPosts.stream()
                 .sorted((s1, s2) -> Integer.compare(s2.getLikeCount()-s2.getDislikeCount(), s1.getLikeCount()-s1.getDislikeCount()))
                 .collect(Collectors.toList());
+    }
+
+    public void writePost(Long accountId, String tittle){
+        AccountEntity currentAccount = accountRepository.findByid(accountId);
+        if(currentAccount.getStatus() == MUTED){
+            throw new ValidateException("Your account has been muted. You cannot write a post until an admin lifted the mute. Please connect to the admin to discuss an uplift");
+        }
+
+        Date d = new Date(System.currentTimeMillis());
+        PostEntity post = new PostEntity();
+        post.setAccountId(accountId);
+        post.setTitle(tittle);
+        post.setCreatedAt(d);
+        post.setStatus(1);
+
+        save(post);
     }
 
     public void editPost(Long id, String title){
@@ -187,6 +197,16 @@ public class PostServiceImpl implements PostService {
         }
     }
 
+    public void interact(AccountEntity currentAccount, Long postId, int type){
+        if (type == LIKE){
+            likePost(postId, currentAccount.getId());
+        } else if (type == DISLIKE){
+            dislikePost(postId, currentAccount.getId());
+        } else {
+            throw new ValidateException("Unknown interaction type!");
+        }
+    }
+
 
     public void deletePost(Long id) {
         PostEntity post = postRepository.findById(id).get();
@@ -205,18 +225,6 @@ public class PostServiceImpl implements PostService {
         PostListResponse data = new PostListResponse(posts.getTotalElements(),posts.getTotalPages(), posts.getSize(), posts.getContent());
         return data;
     }
-
-    public void checkUser(long id){
-        AccountEntity currentAccount = authenticationService.extractUser();
-        PostEntity post = getPostById(id);
-        if(!currentAccount.getId().equals(post.getAccountId())){
-            throw new ValidateException("This post is not written by you");
-        }
-    }
-
-
-
-
 
 
 

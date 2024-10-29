@@ -9,7 +9,6 @@ public interface AccountService {
 
     void editAccountInfo(AccountInfoRequest a);
 
-    void checkUser(Long id);
 
     void deleteAccount(Long id);
 

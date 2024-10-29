@@ -17,6 +17,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import static org.example.forum.constants.AppConstants.FEMALE;
+import static org.example.forum.constants.AppConstants.MALE;
+
 @Service
 @Transactional
 public class AccountServiceImpl implements AccountService {
@@ -48,12 +51,20 @@ public class AccountServiceImpl implements AccountService {
         String username = accountRepository.findByid(id).getUsername();
         AccountInfoDTO a = mapper.map(accountInfo,AccountInfoDTO.class);
         a.setUsername(username);
+        if (accountInfo.getGender() == MALE){
+            a.setGender("Male");
+        } else if (accountInfo.getGender() == FEMALE){
+            a.setGender("Female");
+        } else {
+            a.setGender("Unknown");
+        }
         return a;
     }
 
     public void editAccountInfo(AccountInfoRequest a){
         AccountInfoEntity accountInfo = findInfoByAccountId(a.getAccountId());
         accountInfo.setDateOfBirth(a.getDateOfBirth());
+        accountInfo.setGender(a.getGender());
         accountInfo.setGender(a.getGender());
         accountInfo.setNationality(a.getNationality());
         accountInfo.setPhoneNumbers(a.getPhoneNumbers());
@@ -62,12 +73,6 @@ public class AccountServiceImpl implements AccountService {
         accountInfoRepository.save(accountInfo);
     }
 
-    public void checkUser(Long id){
-        AccountEntity currentAccount = authenticationService.extractUser();
-        if(!currentAccount.getId().equals(id)){
-            throw new ValidateException("This is the profile from another account, you can't do this function");
-        }
-    }
 
     public void deleteAccount(Long id){
         AccountEntity a = findAccountById(id);

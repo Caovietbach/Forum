@@ -56,8 +56,9 @@ public class CommentServiceImpl implements CommentService {
 
         AccountEntity currentAccount = accountRepository.findByid(accountId);
         if(currentAccount.getStatus() == 2){
-            throw new ValidateException("Your account has been muted due to your violation of the guideline. Please connect to the admin to discuss an uplift");
+            throw new ValidateException("Your account has been muted. You cannot write a post until an admin lifted the mute. Please connect to the admin to discuss an uplift");
         }
+
         Date d = new Date(System.currentTimeMillis());
 
         CommentEntity comment = null;
@@ -125,6 +126,11 @@ public class CommentServiceImpl implements CommentService {
         if(!currentAccount.getId().equals(comment.getAccountId())){
             throw new ValidateException("This is the comment from another account, you can't do this function");
         }
+    }
+
+    public void reverseDeleteForComment(Long id){
+        CommentEntity comment = findCommentById(id);
+        comment.setStatus(1);
     }
 
 

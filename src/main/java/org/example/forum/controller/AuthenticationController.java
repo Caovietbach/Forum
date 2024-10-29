@@ -38,7 +38,6 @@ public class AuthenticationController {
 
     @PostMapping("/logout")
     public ApiResponse<UserLoginResponse> logout(@RequestHeader("Authorization") String jwtToken) {
-        logger.info("Token for logout: {}", jwtToken);
         JwtBlacklist jwtBlacklist = service.findJwt(jwtToken);
         if (jwtBlacklist == null) {
             service.addJwtToBlackList(jwtToken);

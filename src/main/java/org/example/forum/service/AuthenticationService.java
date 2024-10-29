@@ -30,6 +30,8 @@ public interface AuthenticationService {
 
     UserLoginResponse getLoginInfo(String token);
 
+    void checkUser(Long postId, Long commentId, Long accountId);
+
 
 
 

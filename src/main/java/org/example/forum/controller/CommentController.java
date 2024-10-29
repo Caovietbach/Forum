@@ -49,27 +49,20 @@ public class CommentController {
     @PostMapping("/{postId}/")
     public ApiResponse<String> writePost(@PathVariable Long postId, @RequestBody CommentRequest comment) {
         AccountEntity currentAccount = authenticationService.extractUser();
-        if (currentAccount == null){
-            throw new ValidateException("Please login to write a comment");
-        }
-        if (currentAccount.getStatus() == 2){
-            throw new ValidateException("Your account has been muted, you can't write a post");
-        }
-        logger.info("User name is: {}", currentAccount.getUsername());
         commentService.writeComment(currentAccount.getId(),postId, comment.getContent());
         return new ApiResponse<>(true, "Post created successfully", null);
     }
 
     @PutMapping("/{postId}/{id}")
     public ApiResponse<String> editPost(@PathVariable Long id,  @RequestBody CommentRequest comment) {
-        commentService.checkUser(id);
+        authenticationService.checkUser(null, id, null);
         commentService.editComment(id, comment.getContent());
         return new ApiResponse<>(true, "Post edited successfully", null);
     }
 
     @DeleteMapping("/{postId}/{id}")
     public ApiResponse<String> deletePost(@PathVariable Long id) {
-        commentService.checkUser(id);
+        authenticationService.checkUser(null, id, null);
         commentService.deleteComment(id);
         return new ApiResponse<>(true, "Post deleted successfully", null);
     }

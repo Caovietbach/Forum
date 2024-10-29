@@ -10,7 +10,7 @@ public class AccountInfoDTO {
 
     private String username;
     private Date dateOfBirth;
-    private int gender;
+    private String gender;
     private String nationality;
     private String phoneNumbers;
     private String email;

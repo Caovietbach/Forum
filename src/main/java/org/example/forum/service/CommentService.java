@@ -28,6 +28,5 @@ public interface CommentService {
 
     CommentListResponse getContent(Page<CommentDTO> comments);
 
-    void checkUser(Long id);
 
 }
