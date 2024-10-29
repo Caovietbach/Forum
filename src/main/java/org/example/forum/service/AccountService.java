@@ -7,7 +7,7 @@ public interface AccountService {
 
     AccountInfoDTO showAccountInfo(long id);
 
-    void editAccountInfo(AccountInfoRequest a);
+    void editAccountInfo(AccountInfoRequest a, Long id);
 
 
     void deleteAccount(Long id);

@@ -38,7 +38,7 @@ public class AccountController {
     @PutMapping("/{id}")
     public ApiResponse<String> editProfile(@PathVariable Long id, @RequestBody AccountInfoRequest a){
         authenticationService.checkUser(null, null, id);
-        accountService.editAccountInfo(a);
+        accountService.editAccountInfo(a,id);
         return new ApiResponse<>(true, "Modify account profile successfully", null);
     }
 

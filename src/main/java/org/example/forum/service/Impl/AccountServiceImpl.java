@@ -61,8 +61,8 @@ public class AccountServiceImpl implements AccountService {
         return a;
     }
 
-    public void editAccountInfo(AccountInfoRequest a){
-        AccountInfoEntity accountInfo = findInfoByAccountId(a.getAccountId());
+    public void editAccountInfo(AccountInfoRequest a, Long id){
+        AccountInfoEntity accountInfo = findInfoByAccountId(id);
         accountInfo.setDateOfBirth(a.getDateOfBirth());
         accountInfo.setGender(a.getGender());
         accountInfo.setGender(a.getGender());
