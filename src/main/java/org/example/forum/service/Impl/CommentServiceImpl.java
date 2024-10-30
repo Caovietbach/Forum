@@ -40,7 +40,7 @@ public class CommentServiceImpl implements CommentService {
 
     ModelMapper mapper = new ModelMapper();
 
-    public CommentEntity findCommentById(long id){
+    public CommentEntity findCommentById(Long id){
         return commentRepository.findByid(id);
     }
 
@@ -95,7 +95,7 @@ public class CommentServiceImpl implements CommentService {
     //Functions that handle the post data for controller///
     ///////////////////////////////////////////////////////
 
-    public CommentListResponse showCommentsOfAPost(Long postId, int page, int size){
+    public CommentListResponse showCommentsOfAPost(Long postId, Integer page, Integer size){
         List<CommentDTO> listComments = getCommentData(postId);
         Pageable pageable = PageRequest.of(page,size);
         Page<CommentDTO> comments = getPage(listComments, pageable);

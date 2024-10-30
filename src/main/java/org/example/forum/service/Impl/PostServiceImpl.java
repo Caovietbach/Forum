@@ -190,7 +190,7 @@ public class PostServiceImpl implements PostService {
     ///////////////////////////////////////////////////////
 
 
-    public PostListResponse showPost(PostRequest p, int sort, int page, int size){
+    public PostListResponse showPost(PostRequest p, Integer sort,Integer page, Integer size){
         List<PostDTO> listPosts = getPostData(p, sort);
         Pageable pageable = PageRequest.of(page,size);
         Page<PostDTO> posts = getPage(listPosts, pageable);

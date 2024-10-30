@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface PostService {
 
-    PostListResponse showPost(PostRequest p, int sort, int page, int size);
+    PostListResponse showPost(PostRequest p, Integer sort,Integer page, Integer size);
 
     void writePost(String tittle);
 

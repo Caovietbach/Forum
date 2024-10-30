@@ -1,5 +1,6 @@
 package org.example.forum.service;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.example.forum.dto.CommentDTO;
 import org.example.forum.entity.CommentEntity;
 import org.example.forum.response.pagination.CommentListResponse;
@@ -12,9 +13,9 @@ import java.util.List;
 
 public interface CommentService {
 
-    CommentListResponse showCommentsOfAPost(Long postId, int page, int size);
+    CommentListResponse showCommentsOfAPost(Long postId, Integer page, Integer size);
 
-    CommentEntity findCommentById(long id);
+    CommentEntity findCommentById(Long id);
 
     void writeComment(Long postId, String content);
 
