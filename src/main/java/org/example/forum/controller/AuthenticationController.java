@@ -1,73 +1,61 @@
 package org.example.forum.controller;
 
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
-import org.example.forum.filter.LoginFilter;
+import org.example.forum.entity.AccountEntity;
+import org.example.forum.entity.JwtBlacklist;
+import org.example.forum.request.AccountRequest;
+import org.example.forum.response.api.ApiResponse;
+import org.example.forum.response.login.UserLoginResponse;
+import org.example.forum.service.AccountService;
 import org.example.forum.service.AuthenticationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-@Controller
+
+@RestController
+@RequestMapping("/api/auth")
 public class AuthenticationController {
 
     @Autowired
     private AuthenticationService service;
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
+    @Autowired
+    private AccountService accountService;
 
 
-    @GetMapping("/login")
-    public String loginPage() {
-        return "login";
-    }
 
     @PostMapping("/login")
-    public String login(@RequestParam("username") String username,
-                        @RequestParam("password") String password,
-                        HttpServletResponse response, Model model) {
-        if(!service.validateLogin(username,password)){
-            return "redirect:/login";
-        };
-        final String jwt = service.generateToken(username);
-
-
-        Cookie cookie = new Cookie("JWT_TOKEN", jwt);
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(10 * 60 * 60); // 8 hours
-        cookie.setPath("/");
-        response.addCookie(cookie);
-        logger.info("Successfully logged in. Redirecting to Main Page.");
-        return "redirect:/forum";
+    public ApiResponse<UserLoginResponse> login(@RequestBody AccountRequest user) {
+        UserLoginResponse res = service.login(user);
+        return new ApiResponse<>(true, "Login successfully", res);
     }
 
-    @GetMapping("/logout")
-    public String logout(HttpServletResponse response) {
-        Cookie cookie = new Cookie("JWT_TOKEN", null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        response.addCookie(cookie);
-        return "redirect:/login";
+    @PostMapping("/logout")
+    public ApiResponse<UserLoginResponse> logout(@RequestHeader("Authorization") String jwtToken) {
+        service.logout(jwtToken);
+        return new ApiResponse<>(true, "Logout successfully", null);
     }
 
-    @GetMapping("/register")
-    public String registerPage() {
-        return "register";
-    }
 
     @PostMapping("/register")
-    public String register(@RequestParam("username") String username,
-                           @RequestParam("password") String password){
-        service.register(username,password);
-        return "login";
+    public ApiResponse<UserLoginResponse> register(@RequestBody AccountRequest account){
+        service.register(account.getUsername(),account.getPassword());
+        return new ApiResponse<>(true, "Successfully creating new account", null);
+    }
+
+    @PutMapping("/{id}/mute")
+    public ApiResponse<String> muteAccount(@PathVariable Long id){
+        accountService.suspendAccount(id);
+        return new ApiResponse<>(true, "Muting account successfully", null);
+    }
+
+    @PutMapping("/{id}/unmute")
+    public ApiResponse<String> unmuteAccount(@PathVariable Long id){
+        accountService.upliftAccount(id);
+        return new ApiResponse<>(true, "Un-muting account successfully", null);
     }
 
 

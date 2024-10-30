@@ -11,7 +11,7 @@ public class AccountInfoRequest {
     private Date dateOfBirth;
     private int gender;
     private String nationality;
-    private String phoneNumbers;
+    private int phoneNumbers;
     private String email;
     private String description;
 

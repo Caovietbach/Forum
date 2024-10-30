@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import lombok.Data;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.Date;
 
@@ -16,7 +17,7 @@ public class AccountInfoEntity {
 
     @Id
     @GeneratedValue
-    private Long id;
+    private long id;
 
     private Long accountId;
 

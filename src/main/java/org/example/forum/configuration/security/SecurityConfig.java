@@ -18,17 +18,34 @@ public class SecurityConfig {
     @Autowired
     private final LoginFilter loginFilter;
 
-    public SecurityConfig(LoginFilter loginFilter) {
+    @Autowired
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+
+    @Autowired
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
+
+    public SecurityConfig(LoginFilter loginFilter,
+                          CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+                          CustomAccessDeniedHandler customAccessDeniedHandler) {
         this.loginFilter = loginFilter;
+        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
+        this.customAccessDeniedHandler = customAccessDeniedHandler;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/logout","/register").permitAll()
-                        .requestMatchers("/forum","/writePost","/editPost/*","/deletePost/*").hasAnyRole("USER","ADMIN")
+                        .requestMatchers("/api/auth/register","/api/auth/login","api/auth/logout").permitAll()
+                        .requestMatchers("api/auth/{id}/mute", "api/auth/{id}/unmute").hasRole("ADMIN")
+                        .requestMatchers("/api/posts/**").hasAnyRole("USER","ADMIN")
+                        .requestMatchers("/api/comments/**").hasAnyRole("USER","ADMIN")
+                        .requestMatchers("/api/account/**").hasAnyRole("USER","ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(loginFilter, UsernamePasswordAuthenticationFilter.class)

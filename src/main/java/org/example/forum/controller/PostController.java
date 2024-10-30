@@ -3,21 +3,32 @@ package org.example.forum.controller;
 import org.example.forum.dto.PostDTO;
 import org.example.forum.entity.AccountEntity;
 import org.example.forum.entity.PostEntity;
+import org.example.forum.exception.ValidateException;
+import org.example.forum.request.PostRequest;
+import org.example.forum.response.api.ApiResponse;
+import org.example.forum.response.pagination.PostListResponse;
 import org.example.forum.service.AuthenticationService;
 import org.example.forum.service.PostService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+
+import java.util.ArrayList;
 import java.util.List;
 
-@Controller
+@RestController
+@RequestMapping("/api/posts")
 public class PostController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
+    private static final Logger logger = LoggerFactory.getLogger(PostController.class);
 
     @Autowired
     private PostService postService;
@@ -25,52 +36,39 @@ public class PostController {
     @Autowired
     private AuthenticationService authenticationService;
 
-    @GetMapping("/forum")
-    public String mainPage(Model model) {
-        List<PostDTO> listPosts = postService.showPost();
-        model.addAttribute("listPosts", listPosts);
-        return "mainPage";
+
+
+    @GetMapping("/")
+    public ApiResponse<PostListResponse> showPost(@RequestParam(value = "sort", required = false) Integer sort,
+                                                @RequestParam(value = "page", defaultValue = "0") int page,
+                                                @RequestParam(value = "size", defaultValue = "10") int size,
+                                                @RequestBody(required = false) PostRequest p){
+        return new ApiResponse<>(true, "Posts retrieved successfully", postService.showPost(p,sort,page,size));
     }
 
-    @GetMapping("/writePost")
-    public String writePostPage() {
-        return "writePost";
+    @PostMapping("/write")
+    public ApiResponse<String> writePost(@RequestBody PostRequest post) {
+        postService.writePost(post.getTitle());
+        return new ApiResponse<>(true, "Post created successfully", null);
     }
 
-    @PostMapping("/writePost")
-    public String writePost(@CookieValue(name = "jwtToken", required = false) String jwtToken,@RequestParam("tittle") String tittle){
-        if (jwtToken == null) {
-            logger.warn("No jwtToken found in request");
-            return "redirect:/login";
-        }
-        AccountEntity currentAccount = authenticationService.extractUser(jwtToken);
-        postService.writePost(currentAccount.getId(), tittle);
-        return "mainPage";
+    @PutMapping("/{id}")
+    public ApiResponse<String> editPost(@PathVariable Long id, @RequestBody PostRequest post) {
+        authenticationService.checkUser(id, null, null);
+        postService.editPost(id, post.getTitle());
+        return new ApiResponse<>(true, "Post edited successfully", null);
     }
 
-    @GetMapping("/editPost/{id}")
-    public String editPostPage(@PathVariable Long id, Model model) {
-        PostEntity post = postService.getPostById(id);
-        if (post != null) {
-            model.addAttribute("post", post);
-            return "editPost";
-        } else {
-            return "redirect:/forum";
-        }
-    }
-
-    @PostMapping("/editPost/{id}")
-    public String editPost(@PathVariable Long id, @RequestParam("title") String title) {
-        postService.editPost(id, title);
-        return "redirect:/forum";
-    }
-
-
-    @PostMapping("/deletePost/{id}")
-    public String deletePost(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public ApiResponse<String> deletePost(@PathVariable Long id) {
+        authenticationService.checkUser(id, null, null);
         postService.deletePost(id);
-        return "redirect:/forum";
+        return new ApiResponse<>(true, "Post deleted successfully", null);
     }
 
-
+    @PostMapping("{id}/interact")
+    public ApiResponse<String> interactPost(@PathVariable Long id, @RequestParam(value = "type") int type){
+        postService.interact(id,type);
+        return new ApiResponse<>(true, "Post interacted successfully", null);
+    }
 }
