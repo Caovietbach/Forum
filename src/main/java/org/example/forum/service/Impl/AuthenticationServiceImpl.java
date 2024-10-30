@@ -210,11 +210,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    @Scheduled(cron = "0 0 * * * ?")
+    @Scheduled(cron = "0 */5 * * * ?")
     public void deleteExpiredTokens() {
         long currentTime = System.currentTimeMillis();
-        long deletionDate = currentTime - DELETION_DATE;
-        jwtBlacklistRepository.deleteAllByExpirationDateLessThan(deletionDate);
+        long deletionDate = currentTime + DELETION_DATE;
+        jwtBlacklistRepository.deleteAllExpiredJWT(deletionDate);
         logger.info("Expired JWT tokens deleted at: {}", new Date(currentTime));
     }
 
