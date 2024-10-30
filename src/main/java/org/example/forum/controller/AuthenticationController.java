@@ -3,6 +3,7 @@ package org.example.forum.controller;
 
 import org.example.forum.entity.AccountEntity;
 import org.example.forum.entity.JwtBlacklist;
+import org.example.forum.request.AccountRequest;
 import org.example.forum.response.api.ApiResponse;
 import org.example.forum.response.login.UserLoginResponse;
 import org.example.forum.service.AccountService;
@@ -24,30 +25,23 @@ public class AuthenticationController {
     @Autowired
     private AccountService accountService;
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
 
     @PostMapping("/login")
-    public ApiResponse<UserLoginResponse> login(@RequestBody AccountEntity user) {
-        service.validateLogin(user.getUsername(),user.getPassword());
-        String token = service.generateToken(user.getUsername());
-        logger.info("The new token is:{}",token);
-        UserLoginResponse res = service.getLoginInfo(token);
+    public ApiResponse<UserLoginResponse> login(@RequestBody AccountRequest user) {
+        UserLoginResponse res = service.login(user);
         return new ApiResponse<>(true, "Login successfully", res);
     }
 
     @PostMapping("/logout")
     public ApiResponse<UserLoginResponse> logout(@RequestHeader("Authorization") String jwtToken) {
-        JwtBlacklist jwtBlacklist = service.findJwt(jwtToken);
-        if (jwtBlacklist == null) {
-            service.addJwtToBlackList(jwtToken);
-        }
+        service.logout(jwtToken);
         return new ApiResponse<>(true, "Logout successfully", null);
     }
 
 
     @PostMapping("/register")
-    public ApiResponse<UserLoginResponse> register(@RequestBody AccountEntity account){
+    public ApiResponse<UserLoginResponse> register(@RequestBody AccountRequest account){
         service.register(account.getUsername(),account.getPassword());
         return new ApiResponse<>(true, "Successfully creating new account", null);
     }

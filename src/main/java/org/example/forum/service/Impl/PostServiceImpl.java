@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -64,7 +65,7 @@ public class PostServiceImpl implements PostService {
     }
 
 
-    public List<PostDTO> showPost(PostRequest postRequest,Integer sort){
+    public List<PostDTO> getPostData(PostRequest postRequest,Integer sort){
         List<PostDTO> listPosts = new ArrayList<>();
         List<PostDTO> postDTOs = new ArrayList<>();
         List<PostEntity> posts = postRepository.getActivePost();
@@ -126,41 +127,13 @@ public class PostServiceImpl implements PostService {
                 .collect(Collectors.toList());
     }
 
-    public void writePost(Long accountId, String tittle){
-        AccountEntity currentAccount = accountRepository.findByid(accountId);
-        if(currentAccount.getStatus() == MUTED){
-            throw new ValidateException("Your account has been muted. You cannot write a post until an admin lifted the mute. Please connect to the admin to discuss an uplift");
-        }
-
-        Date d = new Date(System.currentTimeMillis());
-        PostEntity post = new PostEntity();
-        post.setAccountId(accountId);
-        post.setTitle(tittle);
-        post.setCreatedAt(d);
-        post.setStatus(1);
-
-        save(post);
-    }
-
-    public void editPost(Long id, String title){
-
-        PostEntity post = postRepository.findById(id).get();
-
-        Date d = new Date(System.currentTimeMillis());
-
-        post.setTitle(title);
-        post.setCreatedAt(d);
-        post.setStatus(1);
-
-        save(post);
-    }
 
     public int getLikeCount(Long postId) {
-        return postInteractionRepository.countLikes(postId);
+        return postInteractionRepository.countInteraction(postId, LIKE);
     }
 
     public int getDislikeCount(Long postId) {
-        return postInteractionRepository.countDislikes(postId);
+        return postInteractionRepository.countInteraction(postId, DISLIKE);
     }
 
     public void likePost(Long postId, Long accountId) {
@@ -197,21 +170,7 @@ public class PostServiceImpl implements PostService {
         }
     }
 
-    public void interact(AccountEntity currentAccount, Long postId, int type){
-        if (type == LIKE){
-            likePost(postId, currentAccount.getId());
-        } else if (type == DISLIKE){
-            dislikePost(postId, currentAccount.getId());
-        } else {
-            throw new ValidateException("Unknown interaction type!");
-        }
-    }
 
-
-    public void deletePost(Long id) {
-        PostEntity post = postRepository.findById(id).get();
-        post.setStatus(2);
-    }
 
     public Page<PostDTO> getPage(List<PostDTO> posts, Pageable pageable) {
         int total = posts.size();
@@ -225,6 +184,63 @@ public class PostServiceImpl implements PostService {
         PostListResponse data = new PostListResponse(posts.getTotalElements(),posts.getTotalPages(), posts.getSize(), posts.getContent());
         return data;
     }
+
+    ///////////////////////////////////////////////////////
+    //Functions that handle the post data for controller///
+    ///////////////////////////////////////////////////////
+
+
+    public PostListResponse showPost(PostRequest p, int sort, int page, int size){
+        List<PostDTO> listPosts = getPostData(p, sort);
+        Pageable pageable = PageRequest.of(page,size);
+        Page<PostDTO> posts = getPage(listPosts, pageable);
+        return getContent(posts);
+    }
+
+    public void writePost(String tittle){
+        AccountEntity currentAccount = authenticationService.extractUser();
+        if(currentAccount.getStatus() == MUTED){
+            throw new ValidateException("Your account has been muted. You cannot write a post until an admin lifted the mute. Please connect to the admin to discuss an uplift");
+        }
+
+        Date d = new Date(System.currentTimeMillis());
+        PostEntity post = new PostEntity();
+        post.setAccountId(currentAccount.getId());
+        post.setTitle(tittle);
+        post.setCreatedAt(d);
+        post.setStatus(1);
+
+        save(post);
+    }
+
+    public void editPost(Long id, String title){
+
+        PostEntity post = postRepository.findById(id).get();
+
+        Date d = new Date(System.currentTimeMillis());
+        post.setTitle(title);
+        post.setCreatedAt(d);
+        post.setStatus(1);
+
+        save(post);
+    }
+
+    public void deletePost(Long id) {
+        PostEntity post = postRepository.findById(id).get();
+        post.setStatus(2);
+    }
+
+    public void interact(Long postId, int type){
+        AccountEntity currentAccount = authenticationService.extractUser();
+        if (type == LIKE){
+            likePost(postId, currentAccount.getId());
+        } else if (type == DISLIKE){
+            dislikePost(postId, currentAccount.getId());
+        } else {
+            throw new ValidateException("Unknown interaction type!");
+        }
+    }
+
 
 
 

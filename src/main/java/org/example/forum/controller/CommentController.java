@@ -41,15 +41,11 @@ public class CommentController {
     @GetMapping("/{postId}")
     public ApiResponse<CommentListResponse> getAllComments(@PathVariable Long postId ,@RequestParam(value = "page", defaultValue = "0") int page,
                                                            @RequestParam(value = "size", defaultValue = "10") int size) {
-        List<CommentDTO> listComments = commentService.showCommentsOfAPost(postId);
-        Pageable pageable = PageRequest.of(page,size);
-        Page<CommentDTO> comments = commentService.getPage(listComments, pageable);
-        return new ApiResponse<>(true, "Comments retrieved successfully", commentService.getContent(comments));
+        return new ApiResponse<>(true, "Comments retrieved successfully", commentService.showCommentsOfAPost(postId,page,size));
     }
     @PostMapping("/{postId}/")
     public ApiResponse<String> writePost(@PathVariable Long postId, @RequestBody CommentRequest comment) {
-        AccountEntity currentAccount = authenticationService.extractUser();
-        commentService.writeComment(currentAccount.getId(),postId, comment.getContent());
+        commentService.writeComment(postId, comment.getContent());
         return new ApiResponse<>(true, "Post created successfully", null);
     }
 
@@ -66,6 +62,7 @@ public class CommentController {
         commentService.deleteComment(id);
         return new ApiResponse<>(true, "Post deleted successfully", null);
     }
+
 
 
 

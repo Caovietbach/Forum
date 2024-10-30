@@ -43,16 +43,12 @@ public class PostController {
                                                 @RequestParam(value = "page", defaultValue = "0") int page,
                                                 @RequestParam(value = "size", defaultValue = "10") int size,
                                                 @RequestBody(required = false) PostRequest p){
-        List<PostDTO> listPosts = postService.showPost(p, sort);
-        Pageable pageable = PageRequest.of(page,size);
-        Page<PostDTO> posts = postService.getPage(listPosts, pageable);
-        return new ApiResponse<>(true, "Posts retrieved successfully", postService.getContent(posts));
+        return new ApiResponse<>(true, "Posts retrieved successfully", postService.showPost(p,sort,page,size));
     }
 
     @PostMapping("/write")
     public ApiResponse<String> writePost(@RequestBody PostRequest post) {
-        AccountEntity currentAccount = authenticationService.extractUser();
-        postService.writePost(currentAccount.getId(), post.getTitle());
+        postService.writePost(post.getTitle());
         return new ApiResponse<>(true, "Post created successfully", null);
     }
 
@@ -71,9 +67,8 @@ public class PostController {
     }
 
     @PostMapping("{id}/interact")
-    public ApiResponse<String> interactPost(@PathVariable Long id, @RequestParam int type){
-        AccountEntity currentAccount = authenticationService.extractUser();
-        postService.interact(currentAccount,id,type);
+    public ApiResponse<String> interactPost(@PathVariable Long id, @RequestParam(value = "type") int type){
+        postService.interact(id,type);
         return new ApiResponse<>(true, "Post interacted successfully", null);
     }
 }

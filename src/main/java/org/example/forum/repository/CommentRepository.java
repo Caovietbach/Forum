@@ -16,7 +16,7 @@ public interface CommentRepository extends CrudRepository<CommentEntity, Long>, 
 
     List<CommentEntity> findByPostId(Long postId);
 
-    CommentEntity findByid(Long id);
+    CommentEntity findByid(Long commentId);
 
     @Query("SELECT c FROM CommentEntity c WHERE " +
             "(:status != 2) AND" +

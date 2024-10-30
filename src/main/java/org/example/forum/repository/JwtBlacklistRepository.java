@@ -13,5 +13,7 @@ import org.springframework.stereotype.Repository;
 public interface JwtBlacklistRepository extends JpaRepository<JwtBlacklist, Long> {
     JwtBlacklist findByJwt(String jwt);
 
+    void deleteAllByExpirationDateLessThan(Long deletionDate);
+
 }
 

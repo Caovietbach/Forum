@@ -19,6 +19,11 @@ public class AppConstants {
 
     public static final int FEMALE = 2;
 
+    //SECRET KEY for login
+    public static final String SECRET_KEY = "secretfortheproject123456789566343535353453890234567435554";
+
+    //Annual deletion date
+    public static final long DELETION_DATE = (8 * 60 * 60 * 1000) + (5 * 60 * 1000);
 
     private AppConstants() {}
 }

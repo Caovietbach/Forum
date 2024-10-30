@@ -8,6 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AccountInfoRepository extends JpaRepository<AccountInfoEntity, Long>,CrudRepository<AccountInfoEntity, Long> {
 
-    AccountInfoEntity findByaccountId(long id);
+    AccountInfoEntity findByaccountId(long accountId);
 
 }

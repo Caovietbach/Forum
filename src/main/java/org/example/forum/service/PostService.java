@@ -12,30 +12,16 @@ import java.util.List;
 
 public interface PostService {
 
-    List<PostDTO> showPost(PostRequest postRequest,Integer sort);
-    List<PostDTO> sortByCreatedDate(List<PostDTO> allPosts);
+    PostListResponse showPost(PostRequest p, int sort, int page, int size);
 
-    List<PostDTO> sortByFirstAlphabetInTitle(List<PostDTO> allPosts);
+    void writePost(String tittle);
 
-    List<PostDTO> sortByFavouritism(List<PostDTO> allPosts);
-
-    List<PostDTO> sortByTotalInteraction(List<PostDTO> allPosts);
-
-    void writePost(Long accountId, String tittle);
-
-    void editPost(Long accountId, String tittle);
+    void editPost(Long id, String title);
 
     PostEntity findPostById(Long id);
 
-    int getLikeCount(Long postId);
 
-    int getDislikeCount(Long postId);
-
-    void likePost(Long postId, Long accountId);
-
-    void dislikePost(Long postId, Long accountId);
-
-    void interact(AccountEntity currentAccount, Long postId, int type);
+    void interact(Long postId, int type);
 
     void deletePost(Long Id);
 

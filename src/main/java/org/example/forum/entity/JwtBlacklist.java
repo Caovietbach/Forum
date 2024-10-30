@@ -15,6 +15,6 @@ public class JwtBlacklist {
     @GeneratedValue
     private long id;
     private String jwt;
-    private Date expirationDate;
+    private Long expirationDate;
 
 }

@@ -11,13 +11,11 @@ import java.util.List;
 
 @Repository
 public interface PostInteractionRepository extends CrudRepository <PostInteractionEntity, Long>, JpaRepository<PostInteractionEntity,Long> {
-    List<PostInteractionEntity> findByPostId(Long id);
 
     PostInteractionEntity findByPostIdAndInteractedAccountId(Long postId, Long accountId);
 
-    @Query("SELECT COUNT(pIE) FROM PostInteractionEntity pIE WHERE pIE.postId = :postId AND pIE.interactionType = 1")
-    int countLikes(@Param("postId") Long postId);
+    @Query("SELECT COUNT(pIE) FROM PostInteractionEntity pIE WHERE pIE.postId = :postId AND pIE.interactionType = :interactionType")
+    int countInteraction(@Param("postId") Long postId, int interactionType);
 
-    @Query("SELECT COUNT(pIE) FROM PostInteractionEntity pIE WHERE pIE.postId = :postId AND pIE.interactionType = 2")
-    int countDislikes(@Param("postId") Long postId);
+
 }

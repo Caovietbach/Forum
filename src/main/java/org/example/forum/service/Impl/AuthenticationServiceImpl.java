@@ -9,6 +9,7 @@ import org.example.forum.exception.ValidateException;
 import org.example.forum.repository.AccountInfoRepository;
 import org.example.forum.repository.AccountRepository;
 import org.example.forum.repository.JwtBlacklistRepository;
+import org.example.forum.request.AccountRequest;
 import org.example.forum.response.login.UserLoginResponse;
 import org.example.forum.service.AuthenticationService;
 import org.example.forum.service.CommentService;
@@ -33,6 +34,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.example.forum.constants.AppConstants.DELETION_DATE;
+import static org.example.forum.constants.AppConstants.SECRET_KEY;
+
 @Service
 @Transactional
 public class AuthenticationServiceImpl implements AuthenticationService {
@@ -56,7 +60,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
 
 
-    private final String SECRET_KEY = "secretfortheproject123456789566343535353453890234567435554";
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
@@ -84,7 +87,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
 
-    public int extractExpiration(String token) {
+    public int calculateExpirationDate(String token) {
         Date expiration = Jwts.parser()
                 .setSigningKey(getSecretKey())
                 //.setSigningKey(SECRET_KEY)
@@ -97,6 +100,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         int exp = (int) ((expirationTimeMillis - currentTimeMillis) / 1000);
 
         return exp;
+    }
+
+    private Long extractExpirationDate(String token){
+        Date expiration = Jwts.parser()
+                .setSigningKey(getSecretKey())
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration();
+        Long expirationTimeMillis = expiration.getTime();
+        return expirationTimeMillis;
     }
 
     public AccountEntity extractUser() {
@@ -121,6 +134,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .getBody()
                 .getSubject();
         AccountEntity result = accountRepository.findByusername(user);
+        if (result == null){
+            throw new ValidateException("Please login to use this function");
+        }
         return result;
     }
 
@@ -138,20 +154,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         } else {
             return true;
         }
-    }
-
-    public void register(String username, String password){
-        AccountEntity account = new AccountEntity();
-        Date d = new Date(System.currentTimeMillis());
-        account.setUsername(username);
-        account.setPassword(password);
-        account.setCreatedAt(d);
-        account.setRole("admin");
-        account.setStatus(1);
-        accountRepository.save(account);
-        AccountInfoEntity aie = new AccountInfoEntity();
-        aie.setAccountId(account.getId());
-        accountInfoRepository.save(aie);
     }
 
 
@@ -176,6 +178,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String jwt = jwtToken.substring(7);
         JwtBlacklist a = new JwtBlacklist();
         a.setJwt(jwt);
+        a.setExpirationDate(extractExpirationDate(jwt));
         save(a);
     }
 
@@ -183,7 +186,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         UserLoginResponse res = new UserLoginResponse();
         res.setAccessToken(token);
         res.setTokenType("Bearer");
-        res.setExpiresIn(extractExpiration(token));
+        res.setExpiresIn(calculateExpirationDate(token));
         if (token == null) {
             throw new ValidateException("Invalid token");
         }
@@ -203,9 +206,52 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
         AccountEntity currentAccount = extractUser();
         if(!currentAccount.getId().equals(id)){
-            throw new ValidateException("This is the comment from another account, you can't do this function");
+            throw new ValidateException("This is from another account, you can't do this function");
         }
     }
+
+    @Scheduled(cron = "0 0 * * * ?")
+    public void deleteExpiredTokens() {
+        long currentTime = System.currentTimeMillis();
+        long deletionDate = currentTime - DELETION_DATE;
+        jwtBlacklistRepository.deleteAllByExpirationDateLessThan(deletionDate);
+        logger.info("Expired JWT tokens deleted at: {}", new Date(currentTime));
+    }
+
+    /////////////////////////////////////////////////////
+    //Functions that handle the authentication process///
+    /////////////////////////////////////////////////////
+    public UserLoginResponse login(AccountRequest user){
+        validateLogin(user.getUsername(), user.getPassword());
+        String token = generateToken(user.getUsername());
+        logger.info("The new token is:{}",token);
+        UserLoginResponse res = getLoginInfo(token);
+        return res;
+    }
+
+    public void register(String username, String password){
+        AccountEntity account = new AccountEntity();
+        Date d = new Date(System.currentTimeMillis());
+        account.setUsername(username);
+        account.setPassword(password);
+        account.setCreatedAt(d);
+        account.setRole("user");
+        account.setStatus(1);
+        accountRepository.save(account);
+        AccountInfoEntity aie = new AccountInfoEntity();
+        aie.setAccountId(account.getId());
+        accountInfoRepository.save(aie);
+    }
+
+    public void logout(String jwtToken){
+        JwtBlacklist jwtBlacklist = findJwt(jwtToken);
+        if (jwtBlacklist == null) {
+            addJwtToBlackList(jwtToken);
+        }
+    }
+
+
+
 
 
 }

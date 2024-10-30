@@ -15,6 +15,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -52,26 +53,9 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.save(comment);
     }
 
-    public void writeComment(Long accountId, Long postId, String content){
 
-        AccountEntity currentAccount = accountRepository.findByid(accountId);
-        if(currentAccount.getStatus() == 2){
-            throw new ValidateException("Your account has been muted. You cannot write a post until an admin lifted the mute. Please connect to the admin to discuss an uplift");
-        }
 
-        Date d = new Date(System.currentTimeMillis());
-
-        CommentEntity comment = null;
-        comment.setAccountId(accountId);
-        comment.setPostId(postId);
-        comment.setContent(content);
-        comment.setCreatedAt(d);
-        comment.setStatus(1);
-
-        save(comment);
-    }
-
-    public List<CommentDTO> showCommentsOfAPost(Long postId){
+    public List<CommentDTO> getCommentData(Long postId){
         List<CommentDTO> commentDTOs = new ArrayList<>();
         List<CommentEntity> comments = commentRepository.getActiveComment(postId);
 
@@ -88,25 +72,6 @@ public class CommentServiceImpl implements CommentService {
         return commentDTOs;
     }
 
-    public void editComment(Long id, String content){
-
-        CommentEntity comment = findCommentById(id);
-
-        Date d = new Date(System.currentTimeMillis());
-
-        comment.setContent(content);
-        comment.setCreatedAt(d);
-        comment.setStatus(1);
-
-        save(comment);
-    }
-
-
-
-    public void deleteComment(Long id) {
-        CommentEntity comment = findCommentById(id);
-        comment.setStatus(2);
-    }
     public Page<CommentDTO> getPage(List<CommentDTO> comments, Pageable pageable) {
         int total = comments.size();
         List<CommentDTO> paginatedList = comments.stream()
@@ -120,18 +85,58 @@ public class CommentServiceImpl implements CommentService {
         return data;
     }
 
-    public void checkUser(Long id){
-        AccountEntity currentAccount = authenticationService.extractUser();
-        CommentEntity comment = findCommentById(id);
-        if(!currentAccount.getId().equals(comment.getAccountId())){
-            throw new ValidateException("This is the comment from another account, you can't do this function");
-        }
-    }
 
     public void reverseDeleteForComment(Long id){
         CommentEntity comment = findCommentById(id);
         comment.setStatus(1);
     }
+
+    //////////////////////////////////////////////////////
+    //Functions that handle the post data for controller///
+    ///////////////////////////////////////////////////////
+
+    public CommentListResponse showCommentsOfAPost(Long postId, int page, int size){
+        List<CommentDTO> listComments = getCommentData(postId);
+        Pageable pageable = PageRequest.of(page,size);
+        Page<CommentDTO> comments = getPage(listComments, pageable);
+        return getContent(comments);
+    }
+
+    public void writeComment(Long postId, String content){
+        AccountEntity currentAccount = authenticationService.extractUser();
+        if(currentAccount.getStatus() == 2){
+            throw new ValidateException("Your account has been muted. You cannot write a post until an admin lifted the mute. Please connect to the admin to discuss an uplift");
+        }
+
+        Date d = new Date(System.currentTimeMillis());
+
+        CommentEntity comment = null;
+        comment.setAccountId(currentAccount.getId());
+        comment.setPostId(postId);
+        comment.setContent(content);
+        comment.setCreatedAt(d);
+        comment.setStatus(1);
+
+        save(comment);
+    }
+
+    public void editComment(Long id, String content){
+        CommentEntity comment = findCommentById(id);
+
+        Date d = new Date(System.currentTimeMillis());
+
+        comment.setContent(content);
+        comment.setCreatedAt(d);
+        comment.setStatus(1);
+
+        save(comment);
+    }
+
+    public void deleteComment(Long id) {
+        CommentEntity comment = findCommentById(id);
+        comment.setStatus(2);
+    }
+
 
 
 }

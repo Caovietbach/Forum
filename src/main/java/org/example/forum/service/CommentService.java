@@ -12,13 +12,12 @@ import java.util.List;
 
 public interface CommentService {
 
-    List<CommentEntity> getCommentByPostId(Long id);
+    CommentListResponse showCommentsOfAPost(Long postId, int page, int size);
 
     CommentEntity findCommentById(long id);
 
-    void writeComment(Long accountId, Long postId, String content);
+    void writeComment(Long postId, String content);
 
-    List<CommentDTO> showCommentsOfAPost(Long commentId);
 
     void editComment(Long id, String content);
 
