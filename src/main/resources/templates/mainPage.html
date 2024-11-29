@@ -9,7 +9,7 @@
 <div align="center">
     <h1>Forum</h1>
     <br/><br/>
-    <a href="writePost">Posting</a>
+    <a href="writePost">Create New Post</a>
     <br/><br/>
     <table border="1" cellpadding="10">
         <thead>
@@ -17,13 +17,26 @@
             <th>User</th>
             <th>Post</th>
             <th>Posted at</th>
+            <th>Total Interaction</th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="post : ${listPosts}">
-            <td th:text="${post.username}"></td> <!-- Accessing username from PostDTO -->
-            <td th:text="${post.title}"></td>
+            <td th:text="${post.username}"></td>
+            <td>
+                <a th:href="@{'/editPost/' + ${post.id}}" th:text="${post.title}"></a>
+            </td>
             <td th:text="${post.createdAt}"></td>
+            <td th:text="${post.likeCount - post.dislikeCount}"></td>
+            <td>
+                <form th:action="@{'/likePost/' + ${post.id}}" method="post">
+                    <button type="submit">Like</button>
+                </form>
+                <form th:action="@{'/dislikePost/' + ${post.id}}" method="post">
+                    <button type="submit">Dislike</button>
+                </form>
+            </td>
         </tr>
         </tbody>
     </table>

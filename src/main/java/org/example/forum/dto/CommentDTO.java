@@ -9,19 +9,11 @@ import java.util.Date;
 public class CommentDTO {
     private String username;
 
-    private String postTitle;
+    private Long postId;
 
     private String content;
 
     private Date createdAt;
 
     private int status;
-
-    public CommentDTO(String username, String postTitle, String content, Date createdAt, int status) {
-        this.username = username;
-        this.postTitle = postTitle;
-        this.content = content;
-        this.createdAt = createdAt;
-        this.status = status;
-    }
 }

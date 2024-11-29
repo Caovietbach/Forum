@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class AccountServiceImpl implements AccountService {
     @Autowired
-    private AccountRepository repo;
+    private AccountRepository accountRepository;
+
+    
 
 
 }
